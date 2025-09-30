@@ -2,6 +2,7 @@
 
 [![Release](https://github.com/keithah/hostex-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/keithah/hostex-mcp/actions/workflows/release.yml)
 [![Check hostex-ts Updates](https://github.com/keithah/hostex-mcp/actions/workflows/check-npm-updates.yml/badge.svg)](https://github.com/keithah/hostex-mcp/actions/workflows/check-npm-updates.yml)
+[![Smithery](https://smithery.ai/badge/@keithah/hostex-mcp)](https://smithery.ai/server/@keithah/hostex-mcp)
 
 Model Context Protocol server for the Hostex property management API. Manage your vacation rental properties, reservations, guest communications, and more through Claude and other MCP clients.
 
@@ -45,17 +46,27 @@ Built on [hostex-ts](https://www.npmjs.com/package/hostex-ts) - TypeScript clien
 
 ## Installation
 
-### Option 1: MCPB Package (Recommended for MCP Clients)
+### Option 1: Via Smithery (Recommended)
+
+Install directly from Smithery:
+
+```bash
+npx -y @smithery/cli install @keithah/hostex-mcp --client claude
+```
+
+Or add the hosted server URL to your MCP client:
+
+```
+https://server.smithery.ai/@keithah/hostex-mcp/mcp
+```
+
+When prompted, provide your Hostex API access token.
+
+### Option 2: MCPB Package
 
 1. Download the latest `.mcpb` file from [Releases](https://github.com/keithah/hostex-mcp/releases)
 2. Double-click the file to install in your MCP client
 3. Configure your Hostex API token when prompted
-
-### Option 2: Via Smithery
-
-```bash
-npx -y @smithery/cli install hostex-mcp
-```
 
 ### Option 3: Manual Installation (Claude Desktop)
 
@@ -67,6 +78,21 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
     "hostex": {
       "command": "npx",
       "args": ["-y", "hostex-mcp"],
+      "env": {
+        "HOSTEX_ACCESS_TOKEN": "your_hostex_api_token"
+      }
+    }
+  }
+}
+```
+
+Or use the Smithery hosted server:
+
+```json
+{
+  "mcpServers": {
+    "hostex": {
+      "url": "https://server.smithery.ai/@keithah/hostex-mcp/mcp",
       "env": {
         "HOSTEX_ACCESS_TOKEN": "your_hostex_api_token"
       }
