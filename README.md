@@ -2,6 +2,7 @@
 
 [![Release](https://github.com/keithah/hostex-mcp/actions/workflows/release.yml/badge.svg)](https://github.com/keithah/hostex-mcp/actions/workflows/release.yml)
 [![Check hostex-ts Updates](https://github.com/keithah/hostex-mcp/actions/workflows/check-npm-updates.yml/badge.svg)](https://github.com/keithah/hostex-mcp/actions/workflows/check-npm-updates.yml)
+[![smithery badge](https://smithery.ai/badge/hostex-mcp)](https://smithery.ai/server/hostex-mcp)
 
 Model Context Protocol server for the Hostex property management API. Manage your vacation rental properties, reservations, guest communications, and more through Claude and other MCP clients.
 
@@ -44,6 +45,14 @@ Built on [hostex-ts](https://www.npmjs.com/package/hostex-ts) - TypeScript clien
 - `hostex_list_income_methods` - List income methods
 
 ## Installation
+
+### Installing via Smithery
+
+To install hostex-mcp automatically via [Smithery](https://smithery.ai/server/hostex-mcp):
+
+```bash
+npx -y @smithery/cli install hostex-mcp
+```
 
 ### Option 1: MCPB Package (Recommended for MCP Clients)
 
