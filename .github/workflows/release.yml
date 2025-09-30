@@ -1,0 +1,235 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v0.2.0
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for changelog
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Extract version number
+        id: version_number
+        run: echo "VERSION_NUMBER=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Verify version in package.json matches tag
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PACKAGE_VERSION" != "${{ steps.version_number.outputs.VERSION_NUMBER }}" ]; then
+            echo "Error: Version in package.json ($PACKAGE_VERSION) does not match tag (${{ steps.version_number.outputs.VERSION_NUMBER }})"
+            exit 1
+          fi
+          echo "✅ Version verification passed: $PACKAGE_VERSION"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build MCP server
+        run: npm run build:all
+
+      - name: Create MCPB package
+        run: |
+          # Create temporary directory for packaging
+          mkdir -p temp-mcpb
+
+          # Create manifest.json for MCPB
+          cat > temp-mcpb/manifest.json << EOF
+          {
+            "name": "hostex-mcp",
+            "version": "${{ steps.version_number.outputs.VERSION_NUMBER }}",
+            "description": "Model Context Protocol server for Hostex property management API",
+            "author": "Keith Hadfield",
+            "license": "MIT",
+            "main": "server.js",
+            "mcpVersion": "2024-11-05",
+            "capabilities": {
+              "tools": true,
+              "resources": false,
+              "prompts": false
+            },
+            "categories": ["property-management", "hospitality", "vacation-rental"],
+            "keywords": ["hostex", "property-management", "vacation-rental", "airbnb", "reservations", "messaging"]
+          }
+          EOF
+
+          # Copy built server
+          cp .smithery/stdio/index.cjs temp-mcpb/server.js
+
+          # Copy essential files
+          cp LICENSE temp-mcpb/ 2>/dev/null || echo "No LICENSE file found"
+
+          # Create a README for the package
+          cat > temp-mcpb/README.md << EOF
+          # Hostex MCP Server ${{ steps.version.outputs.VERSION }}
+
+          Model Context Protocol server for the Hostex property management API. Manage your vacation rental properties, reservations, guest communications, and more through Claude and other MCP clients.
+
+          ## Features
+          - 🏠 **Properties** - Manage properties and room types
+          - 📅 **Reservations** - Create, view, and manage bookings
+          - 📊 **Availability** - Control property availability calendars
+          - 💬 **Messaging** - Communicate with guests
+          - ⭐ **Reviews** - Manage guest reviews and responses
+          - 🔗 **Webhooks** - Set up real-time notifications
+          - 📋 **Listings** - Manage channel listings and pricing
+
+          ## Installation
+          1. Double-click this .mcpb file to install in your MCP client
+          2. Configure your Hostex API access token when prompted
+          3. Start managing your properties with AI assistance!
+
+          Get your Hostex API token from: https://www.hostex.io/
+
+          ## Powered By
+          Built using [hostex-ts](https://www.npmjs.com/package/hostex-ts) - TypeScript client library for Hostex API
+          EOF
+
+          # Create icon
+          cat > temp-mcpb/icon.svg << 'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+            <defs>
+              <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <rect width="64" height="64" rx="12" fill="url(#grad)"/>
+            <text x="32" y="42" text-anchor="middle" fill="white" font-family="Arial" font-size="28" font-weight="bold">H</text>
+          </svg>
+          EOF
+
+          # Package into MCPB (ZIP format) with version in filename
+          cd temp-mcpb
+          zip -r ../hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb ./*
+          cd ..
+
+          # Clean up
+          rm -rf temp-mcpb
+
+          # Verify package was created
+          ls -la hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          release_name: "Release ${{ steps.version.outputs.VERSION }}: Hostex MCP Server"
+          body: |
+            # Hostex MCP Server ${{ steps.version.outputs.VERSION }}
+
+            Model Context Protocol server for managing Hostex vacation rental properties through AI assistants like Claude.
+
+            ## Features
+
+            ✅ **25+ Tools** covering all Hostex API operations
+            ✅ **Properties** - Manage properties and room types
+            ✅ **Reservations** - Create, view, and manage bookings
+            ✅ **Availability** - Control property calendars
+            ✅ **Messaging** - Communicate with guests
+            ✅ **Reviews** - Manage reviews and responses
+            ✅ **Webhooks** - Real-time event notifications
+            ✅ **Listings** - Channel management and pricing
+
+            ## Installation Methods
+
+            ### Option 1: MCPB Package (Recommended for MCP Clients)
+            1. Download `hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb` from the assets below
+            2. Double-click the file to install in your MCP client (Claude Desktop, etc.)
+            3. Enable the extension in your client settings
+            4. Configure your Hostex API token when prompted
+
+            ### Option 2: Via Smithery (Universal)
+            ```bash
+            npx -y @smithery/cli install hostex-mcp
+            ```
+
+            ### Option 3: Manual Installation (Claude Desktop)
+            Add to your Claude Desktop config:
+            ```json
+            {
+              "mcpServers": {
+                "hostex": {
+                  "command": "npx",
+                  "args": ["-y", "hostex-mcp"],
+                  "env": {
+                    "HOSTEX_ACCESS_TOKEN": "your_token_here"
+                  }
+                }
+              }
+            }
+            ```
+
+            ## Requirements
+
+            - MCP-compatible client (Claude Desktop v0.10.0+, or any MCP client)
+            - Hostex account with API access
+            - Node.js v18.0.0 or later
+
+            ## Documentation
+
+            - [hostex-ts npm package](https://www.npmjs.com/package/hostex-ts)
+            - [Hostex API Documentation](https://docs.hostex.io/)
+
+            ---
+
+            🤖 Auto-generated release from GitHub Actions
+          draft: false
+          prerelease: false
+
+      - name: Upload MCPB Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb
+          asset_name: hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb
+          asset_content_type: application/zip
+
+      - name: Upload checksums
+        run: |
+          # Generate checksums for the MCPB file
+          sha256sum hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb > hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb.sha256
+          md5sum hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb > hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb.md5
+
+      - name: Upload SHA256 checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb.sha256
+          asset_name: hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb.sha256
+          asset_content_type: text/plain
+
+      - name: Upload MD5 checksum
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb.md5
+          asset_name: hostex-mcp-v${{ steps.version_number.outputs.VERSION_NUMBER }}.mcpb.md5
+          asset_content_type: text/plain

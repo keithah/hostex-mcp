@@ -1,0 +1,102 @@
+name: Check hostex-ts Updates
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check for hostex-ts updates
+        id: check
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').dependencies['hostex-ts']" | sed 's/[\^~]//g')
+          echo "Current hostex-ts version: $CURRENT_VERSION"
+
+          # Get latest version from npm
+          LATEST_VERSION=$(npm view hostex-ts version)
+          echo "Latest hostex-ts version: $LATEST_VERSION"
+
+          # Compare versions
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "UPDATE_AVAILABLE=true" >> $GITHUB_OUTPUT
+            echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
+            echo "🆕 New version available: $LATEST_VERSION (current: $CURRENT_VERSION)"
+          else
+            echo "UPDATE_AVAILABLE=false" >> $GITHUB_OUTPUT
+            echo "✅ Already using latest version: $CURRENT_VERSION"
+          fi
+
+      - name: Update hostex-ts dependency
+        if: steps.check.outputs.UPDATE_AVAILABLE == 'true'
+        run: |
+          npm install hostex-ts@${{ steps.check.outputs.LATEST_VERSION }}
+
+      - name: Build with new version
+        if: steps.check.outputs.UPDATE_AVAILABLE == 'true'
+        run: |
+          npm run build:all
+
+      - name: Bump patch version
+        if: steps.check.outputs.UPDATE_AVAILABLE == 'true'
+        id: bump
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          # Bump patch version
+          NEW_VERSION=$(node -p "
+            const v = '$CURRENT_VERSION'.split('.');
+            v[2] = parseInt(v[2]) + 1;
+            v.join('.');
+          ")
+
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+          # Update package.json version
+          npm version $NEW_VERSION --no-git-tag-version
+
+          echo "Bumped version from $CURRENT_VERSION to $NEW_VERSION"
+
+      - name: Create Pull Request
+        if: steps.check.outputs.UPDATE_AVAILABLE == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update hostex-ts to ${{ steps.check.outputs.LATEST_VERSION }}"
+          title: "Update hostex-ts to ${{ steps.check.outputs.LATEST_VERSION }}"
+          body: |
+            ## Automatic Dependency Update
+
+            This PR updates `hostex-ts` from the current version to `${{ steps.check.outputs.LATEST_VERSION }}`.
+
+            ### Changes
+            - Updated `hostex-ts` dependency to `^${{ steps.check.outputs.LATEST_VERSION }}`
+            - Bumped MCP version to `${{ steps.bump.outputs.NEW_VERSION }}`
+            - Rebuilt Smithery bundles (stdio and shttp)
+
+            ### Testing
+            The build completed successfully with the new dependency version.
+
+            ### Next Steps
+            1. Review and merge this PR
+            2. Create a new release tag `v${{ steps.bump.outputs.NEW_VERSION }}`
+            3. The release workflow will automatically build and publish the MCPB package
+
+            ---
+            🤖 This PR was automatically created by GitHub Actions
+          branch: update-hostex-ts-${{ steps.check.outputs.LATEST_VERSION }}
+          delete-branch: true

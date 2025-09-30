@@ -1,0 +1,45 @@
+{
+  "name": "hostex-mcp",
+  "version": "0.2.0",
+  "description": "Model Context Protocol server for Hostex property management API - supports stdio and streamable HTTP",
+  "type": "module",
+  "module": "./src/index.ts",
+  "bin": {
+    "hostex-mcp": "./.smithery/stdio/index.cjs"
+  },
+  "files": [
+    ".smithery"
+  ],
+  "scripts": {
+    "build": "npm run build:stdio",
+    "build:stdio": "smithery build src/index.ts --transport stdio -o .smithery/stdio/index.cjs && echo '#!/usr/bin/env node' | cat - .smithery/stdio/index.cjs > temp && mv temp .smithery/stdio/index.cjs && chmod +x .smithery/stdio/index.cjs",
+    "build:shttp": "smithery build src/index.ts --transport shttp -o .smithery/shttp/index.cjs",
+    "build:all": "npm run build:stdio && npm run build:shttp",
+    "prepare": "npm run build:stdio",
+    "dev": "smithery dev",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "hostex",
+    "property-management",
+    "vacation-rental",
+    "claude"
+  ],
+  "author": "Keith Hadfield",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "hostex-ts": "^0.1.0"
+  },
+  "devDependencies": {
+    "@smithery/cli": "^1.4.2",
+    "@smithery/sdk": "^1.6.6",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "zod": "^3.25.76"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

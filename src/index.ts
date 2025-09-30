@@ -1,0 +1,371 @@
+#!/usr/bin/env node
+/**
+ * Hostex MCP Server
+ * Model Context Protocol server for Hostex property management API
+ * Supports both stdio and streamable HTTP transports via Smithery
+ */
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import { HostexClient } from 'hostex-ts';
+
+// Configuration schema - automatically detected by Smithery
+export const configSchema = z.object({
+  accessToken: z.string().describe("Your Hostex API access token"),
+});
+
+export default function createServer({
+  config
+}: {
+  config: z.infer<typeof configSchema>
+}) {
+  // Create MCP server
+  const server = new McpServer({
+    name: "hostex-mcp",
+    title: "Hostex Property Management",
+    version: "0.2.0"
+  });
+
+  // Initialize Hostex client with provided API token
+  const hostexClient = new HostexClient({
+    accessToken: config.accessToken,
+  });
+
+  // Register list_properties tool
+  server.tool(
+    "hostex_list_properties",
+    "List properties from your Hostex account. Returns property details including ID, title, address, channels, and location coordinates.",
+    {
+      offset: z.number().optional().describe("Starting point for results (default: 0)"),
+      limit: z.number().optional().describe("Maximum results to return, max 100 (default: 20)"),
+      id: z.number().optional().describe("Filter by specific property ID"),
+    },
+    async ({ offset, limit, id }) => {
+      const result = await hostexClient.listProperties({ offset, limit, id });
+      return result.data;
+    }
+  );
+
+  // Register list_room_types tool
+  server.tool(
+    "hostex_list_room_types",
+    "List room types from your Hostex account",
+    {
+      offset: z.number().optional().describe("Starting point (default: 0)"),
+      limit: z.number().optional().describe("Max results, max 100 (default: 20)"),
+    },
+    async ({ offset, limit }) => {
+      const result = await hostexClient.listRoomTypes({ offset, limit });
+      return result.data;
+    }
+  );
+
+  // Register list_reservations tool
+  server.tool(
+    "hostex_list_reservations",
+    "List and search reservations with filters like status, dates, property ID, etc.",
+    {
+      reservation_code: z.string().optional(),
+      property_id: z.number().optional(),
+      status: z.enum(['wait_accept', 'wait_pay', 'accepted', 'cancelled', 'denied', 'timeout']).optional(),
+      start_check_in_date: z.string().optional().describe("YYYY-MM-DD format"),
+      end_check_in_date: z.string().optional().describe("YYYY-MM-DD format"),
+      start_check_out_date: z.string().optional().describe("YYYY-MM-DD format"),
+      end_check_out_date: z.string().optional().describe("YYYY-MM-DD format"),
+      order_by: z.string().optional().describe("Sort field (default: booked_at)"),
+      offset: z.number().optional(),
+      limit: z.number().optional(),
+    },
+    async (params) => {
+      const result = await hostexClient.listReservations(params as any);
+      return result.data;
+    }
+  );
+
+  // Register create_reservation tool
+  server.tool(
+    "hostex_create_reservation",
+    "Create a direct booking reservation in Hostex",
+    {
+      property_id: z.string().describe("Property ID"),
+      custom_channel_id: z.number().describe("Custom channel ID"),
+      check_in_date: z.string().describe("Check-in date (YYYY-MM-DD)"),
+      check_out_date: z.string().describe("Check-out date (YYYY-MM-DD)"),
+      guest_name: z.string().describe("Primary guest name"),
+      currency: z.string().describe("Currency code (e.g., USD)"),
+      rate_amount: z.number().describe("Total rate amount in cents"),
+      commission_amount: z.number().describe("Commission amount in cents"),
+      received_amount: z.number().describe("Amount received in cents"),
+      income_method_id: z.number().describe("Income method ID"),
+      number_of_guests: z.number().optional(),
+      email: z.string().optional(),
+      mobile: z.string().optional(),
+      remarks: z.string().optional(),
+    },
+    async (data) => {
+      const result = await hostexClient.createReservation(data as any);
+      return result.data;
+    }
+  );
+
+  // Register cancel_reservation tool
+  server.tool(
+    "hostex_cancel_reservation",
+    "Cancel a direct booking reservation (channel bookings not supported)",
+    {
+      reservation_code: z.string().describe("Reservation code to cancel"),
+    },
+    async ({ reservation_code }) => {
+      const result = await hostexClient.cancelReservation(reservation_code);
+      return result;
+    }
+  );
+
+  // Register update_lock_code tool
+  server.tool(
+    "hostex_update_lock_code",
+    "Update the lock code for a stay",
+    {
+      stay_code: z.string().describe("Stay code"),
+      lock_code: z.string().describe("New lock code"),
+    },
+    async ({ stay_code, lock_code }) => {
+      const result = await hostexClient.updateLockCode(stay_code, lock_code);
+      return result;
+    }
+  );
+
+  // Register get_custom_fields tool
+  server.tool(
+    "hostex_get_custom_fields",
+    "Get custom fields for a stay",
+    {
+      stay_code: z.string().describe("Stay code"),
+    },
+    async ({ stay_code }) => {
+      const result = await hostexClient.getCustomFields(stay_code);
+      return result.data;
+    }
+  );
+
+  // Register update_custom_fields tool
+  server.tool(
+    "hostex_update_custom_fields",
+    "Update custom fields for a stay. Custom fields can be used in automated messages using {{cf.field_name}} syntax.",
+    {
+      stay_code: z.string().describe("Stay code"),
+      custom_fields: z.record(z.any()).describe("Custom fields as key-value pairs"),
+    },
+    async ({ stay_code, custom_fields }) => {
+      const result = await hostexClient.updateCustomFields(stay_code, custom_fields);
+      return result;
+    }
+  );
+
+  // Register list_availabilities tool
+  server.tool(
+    "hostex_list_availabilities",
+    "Query property availability for date ranges",
+    {
+      property_ids: z.string().describe("Comma-separated property IDs (max 100)"),
+      start_date: z.string().describe("Start date (YYYY-MM-DD)"),
+      end_date: z.string().describe("End date (YYYY-MM-DD)"),
+    },
+    async (params) => {
+      const result = await hostexClient.listAvailabilities(params);
+      return result.data;
+    }
+  );
+
+  // Register update_availabilities tool
+  server.tool(
+    "hostex_update_availabilities",
+    "Update property availability status for specific dates or date ranges",
+    {
+      property_ids: z.array(z.number()).describe("Array of property IDs to update"),
+      start_date: z.string().optional().describe("Start date (YYYY-MM-DD)"),
+      end_date: z.string().optional().describe("End date (YYYY-MM-DD)"),
+      dates: z.array(z.string()).optional().describe("Specific dates array (alternative to date range)"),
+      available: z.boolean().describe("Availability status"),
+    },
+    async (data) => {
+      const result = await hostexClient.updateAvailabilities(data as any);
+      return result;
+    }
+  );
+
+  // Register list_conversations tool
+  server.tool(
+    "hostex_list_conversations",
+    "List guest conversations and inquiries",
+    {
+      offset: z.number().optional(),
+      limit: z.number().optional(),
+    },
+    async (params) => {
+      const result = await hostexClient.listConversations(params);
+      return result.data;
+    }
+  );
+
+  // Register get_conversation tool
+  server.tool(
+    "hostex_get_conversation",
+    "Get conversation details including all messages",
+    {
+      conversation_id: z.string().describe("Conversation ID"),
+    },
+    async ({ conversation_id }) => {
+      const result = await hostexClient.getConversation(conversation_id);
+      return result.data;
+    }
+  );
+
+  // Register send_message tool
+  server.tool(
+    "hostex_send_message",
+    "Send a text or image message to a guest",
+    {
+      conversation_id: z.string().describe("Conversation ID"),
+      message: z.string().optional().describe("Text message content"),
+      jpeg_base64: z.string().optional().describe("Base64 encoded JPEG image"),
+    },
+    async ({ conversation_id, message, jpeg_base64 }) => {
+      const result = await hostexClient.sendMessage(conversation_id, { message, jpeg_base64 });
+      return result;
+    }
+  );
+
+  // Register list_reviews tool
+  server.tool(
+    "hostex_list_reviews",
+    "Query reviews with filters",
+    {
+      reservation_code: z.string().optional(),
+      property_id: z.number().optional(),
+      review_status: z.string().optional(),
+      start_check_out_date: z.string().optional().describe("YYYY-MM-DD format"),
+      end_check_out_date: z.string().optional().describe("YYYY-MM-DD format"),
+      offset: z.number().optional(),
+      limit: z.number().optional(),
+    },
+    async (params) => {
+      const result = await hostexClient.listReviews(params as any);
+      return result.data;
+    }
+  );
+
+  // Register create_review tool
+  server.tool(
+    "hostex_create_review",
+    "Create a review or reply for a reservation",
+    {
+      reservation_code: z.string().describe("Reservation code"),
+      host_review_score: z.number().optional().describe("Rating score (0-5)"),
+      host_review_content: z.string().optional().describe("Review comment"),
+      host_reply_content: z.string().optional().describe("Reply to guest review"),
+    },
+    async ({ reservation_code, ...data }) => {
+      const result = await hostexClient.createReview(reservation_code, data);
+      return result;
+    }
+  );
+
+  // Register list_webhooks tool
+  server.tool(
+    "hostex_list_webhooks",
+    "List configured webhooks",
+    {},
+    async () => {
+      const result = await hostexClient.listWebhooks();
+      return result.data;
+    }
+  );
+
+  // Register create_webhook tool
+  server.tool(
+    "hostex_create_webhook",
+    "Create a new webhook",
+    {
+      url: z.string().describe("Webhook URL endpoint"),
+    },
+    async ({ url }) => {
+      const result = await hostexClient.createWebhook(url);
+      return result.data;
+    }
+  );
+
+  // Register delete_webhook tool
+  server.tool(
+    "hostex_delete_webhook",
+    "Delete a webhook (only manageable ones)",
+    {
+      webhook_id: z.number().describe("Webhook ID to delete"),
+    },
+    async ({ webhook_id }) => {
+      const result = await hostexClient.deleteWebhook(webhook_id);
+      return result;
+    }
+  );
+
+  // Register get_listing_calendar tool
+  server.tool(
+    "hostex_get_listing_calendar",
+    "Get calendar information for multiple listings",
+    {
+      start_date: z.string().describe("Calendar start date (YYYY-MM-DD)"),
+      end_date: z.string().describe("Calendar end date (YYYY-MM-DD)"),
+      listings: z.array(z.object({
+        channel_type: z.string(),
+        listing_id: z.string(),
+      })),
+    },
+    async (data) => {
+      const result = await hostexClient.getListingCalendar(data);
+      return result.data;
+    }
+  );
+
+  // Register update_listing_prices tool
+  server.tool(
+    "hostex_update_listing_prices",
+    "Update listing prices for channel listings",
+    {
+      channel_type: z.string().describe("Channel type (e.g., airbnb)"),
+      listing_id: z.string().describe("Channel listing ID"),
+      prices: z.array(z.object({
+        date: z.string(),
+        price: z.number(),
+      })),
+    },
+    async (data) => {
+      const result = await hostexClient.updateListingPrices(data);
+      return result;
+    }
+  );
+
+  // Register list_custom_channels tool
+  server.tool(
+    "hostex_list_custom_channels",
+    "Get custom channels from Custom Options Page",
+    {},
+    async () => {
+      const result = await hostexClient.listCustomChannels();
+      return result.data;
+    }
+  );
+
+  // Register list_income_methods tool
+  server.tool(
+    "hostex_list_income_methods",
+    "Get income methods from Custom Options Page",
+    {},
+    async () => {
+      const result = await hostexClient.listIncomeMethods();
+      return result.data;
+    }
+  );
+
+  // Return the server object (Smithery CLI handles transport)
+  return server.server;
+}
