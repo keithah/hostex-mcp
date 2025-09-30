@@ -1,6 +1,6 @@
 {
   "name": "hostex-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Model Context Protocol server for Hostex property management API - supports stdio and streamable HTTP",
   "type": "module",
   "module": "./src/index.ts",
