@@ -1,1 +1,14 @@
 runtime: typescript
+transport: shttp
+configSchema:
+  accessToken:
+    type: string
+    description: Your Hostex API access token
+  email:
+    type: string
+    description: Hostex account email (optional, required for review posting)
+    required: false
+  password:
+    type: string
+    description: Hostex account password (optional, required for review posting)
+    required: false
