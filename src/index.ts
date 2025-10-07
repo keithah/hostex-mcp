@@ -13,8 +13,9 @@ import { HostexClient } from 'hostex-ts';
 // All fields are optional to allow Smithery scanning, but accessToken is required for actual usage
 export const configSchema = z.object({
   accessToken: z.string().optional().describe("Your Hostex API access token (required)"),
-  email: z.string().optional().describe("Hostex account email (optional, required for review posting)"),
-  password: z.string().optional().describe("Hostex account password (optional, required for review posting)"),
+  // TEMPORARILY DISABLED FOR DEBUGGING
+  // email: z.string().optional().describe("Hostex account email (optional, required for review posting)"),
+  // password: z.string().optional().describe("Hostex account password (optional, required for review posting)"),
 });
 
 export default async function createServer({
@@ -51,22 +52,23 @@ export default async function createServer({
   };
 
   // Track login state for review posting
-  let isLoggedIn = false;
+  // let isLoggedIn = false;
 
   // Login if email and password are provided
-  if (config.email && config.password && config.accessToken) {
-    try {
-      await getHostexClient().login({
-        account: config.email,
-        password: config.password,
-      });
-      console.error('✓ Logged in to Hostex successfully');
-      isLoggedIn = true;
-    } catch (error) {
-      console.error('⚠️  Hostex login failed:', error instanceof Error ? error.message : error);
-      console.error('   Review posting will not be available');
-    }
-  }
+  // TEMPORARILY DISABLED FOR DEBUGGING
+  // if (config.email && config.password && config.accessToken) {
+  //   try {
+  //     await getHostexClient().login({
+  //       account: config.email,
+  //       password: config.password,
+  //     });
+  //     console.error('✓ Logged in to Hostex successfully');
+  //     isLoggedIn = true;
+  //   } catch (error) {
+  //     console.error('⚠️  Hostex login failed:', error instanceof Error ? error.message : error);
+  //     console.error('   Review posting will not be available');
+  //   }
+  // }
 
   // Register list_properties tool
   server.tool(
@@ -323,44 +325,45 @@ export default async function createServer({
     }
   );
 
+  // TEMPORARILY DISABLED FOR DEBUGGING
   // Register post_guest_review tool
-  server.tool(
-    "hostex_post_guest_review",
-    "Post a comprehensive guest review with category ratings (requires login via email/password config). This posts reviews as they appear on the Hostex web app.",
-    {
-      reservation_order_code: z.string().describe("Reservation order code (e.g., 0-ABC123-xyz)"),
-      content: z.string().describe("Review text content"),
-      recommend: z.enum(['0', '1']).describe("Would recommend: 1 = yes, 0 = no"),
-      overall_rating: z.enum(['1', '2', '3', '4', '5']).describe("Overall rating (1-5)"),
-      cleanliness: z.enum(['1', '2', '3', '4', '5']).describe("Cleanliness rating (1-5)"),
-      cleanliness_content: z.string().optional().describe("Additional cleanliness comments"),
-      respect_of_house_rules: z.enum(['1', '2', '3', '4', '5']).describe("Respect of house rules rating (1-5)"),
-      respect_house_rules_content: z.string().optional().describe("Additional house rules comments"),
-      communication: z.enum(['1', '2', '3', '4', '5']).describe("Communication rating (1-5)"),
-      communication_content: z.string().optional().describe("Additional communication comments"),
-    },
-    async ({ reservation_order_code, content, recommend, overall_rating, cleanliness, cleanliness_content, respect_of_house_rules, respect_house_rules_content, communication, communication_content }) => {
-      requireAccessToken();
-      if (!isLoggedIn) {
-        throw new Error('Review posting requires login. Please provide email and password in config.');
-      }
-      const result = await getHostexClient().postGuestReview({
-        reservation_order_code,
-        content,
-        category_ratings: {
-          recommend: Number(recommend) as 0 | 1,
-          overall_rating: Number(overall_rating) as 1 | 2 | 3 | 4 | 5,
-          cleanliness: Number(cleanliness) as 1 | 2 | 3 | 4 | 5,
-          cleanliness_content: cleanliness_content || '',
-          respect_of_house_rules: Number(respect_of_house_rules) as 1 | 2 | 3 | 4 | 5,
-          respect_house_rules_content: respect_house_rules_content || '',
-          communication: Number(communication) as 1 | 2 | 3 | 4 | 5,
-          communication_content: communication_content || '',
-        }
-      });
-      return result;
-    }
-  );
+  // server.tool(
+  //   "hostex_post_guest_review",
+  //   "Post a comprehensive guest review with category ratings (requires login via email/password config). This posts reviews as they appear on the Hostex web app.",
+  //   {
+  //     reservation_order_code: z.string().describe("Reservation order code (e.g., 0-ABC123-xyz)"),
+  //     content: z.string().describe("Review text content"),
+  //     recommend: z.enum(['0', '1']).describe("Would recommend: 1 = yes, 0 = no"),
+  //     overall_rating: z.enum(['1', '2', '3', '4', '5']).describe("Overall rating (1-5)"),
+  //     cleanliness: z.enum(['1', '2', '3', '4', '5']).describe("Cleanliness rating (1-5)"),
+  //     cleanliness_content: z.string().optional().describe("Additional cleanliness comments"),
+  //     respect_of_house_rules: z.enum(['1', '2', '3', '4', '5']).describe("Respect of house rules rating (1-5)"),
+  //     respect_house_rules_content: z.string().optional().describe("Additional house rules comments"),
+  //     communication: z.enum(['1', '2', '3', '4', '5']).describe("Communication rating (1-5)"),
+  //     communication_content: z.string().optional().describe("Additional communication comments"),
+  //   },
+  //   async ({ reservation_order_code, content, recommend, overall_rating, cleanliness, cleanliness_content, respect_of_house_rules, respect_house_rules_content, communication, communication_content }) => {
+  //     requireAccessToken();
+  //     if (!isLoggedIn) {
+  //       throw new Error('Review posting requires login. Please provide email and password in config.');
+  //     }
+  //     const result = await getHostexClient().postGuestReview({
+  //       reservation_order_code,
+  //       content,
+  //       category_ratings: {
+  //         recommend: Number(recommend) as 0 | 1,
+  //         overall_rating: Number(overall_rating) as 1 | 2 | 3 | 4 | 5,
+  //         cleanliness: Number(cleanliness) as 1 | 2 | 3 | 4 | 5,
+  //         cleanliness_content: cleanliness_content || '',
+  //         respect_of_house_rules: Number(respect_of_house_rules) as 1 | 2 | 3 | 4 | 5,
+  //         respect_house_rules_content: respect_house_rules_content || '',
+  //         communication: Number(communication) as 1 | 2 | 3 | 4 | 5,
+  //         communication_content: communication_content || '',
+  //       }
+  //     });
+  //     return result;
+  //   }
+  // );
 
   // Register list_webhooks tool
   server.tool(
