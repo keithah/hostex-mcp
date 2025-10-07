@@ -18,7 +18,7 @@ export const configSchema = z.object({
   // password: z.string().optional().describe("Hostex account password (optional, required for review posting)"),
 });
 
-export default async function createServer({
+export default function createServer({
   config
 }: {
   config: z.infer<typeof configSchema>
@@ -467,6 +467,6 @@ export default async function createServer({
     }
   );
 
-  // Return the MCP server object (Smithery handles transport wrapping)
-  return server;
+  // Return the underlying server instance (required by Smithery build)
+  return server.server;
 }
