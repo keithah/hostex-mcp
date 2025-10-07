@@ -29,11 +29,19 @@ export default async function createServer({
     version: "0.2.0"
   });
 
-  // Initialize Hostex client with provided API token
-  // Use empty string as fallback for scanning phase
-  const hostexClient = new HostexClient({
-    accessToken: config.accessToken || '',
-  });
+  // Lazy initialization of Hostex client - only create when accessToken is available
+  let hostexClient: HostexClient | null = null;
+  const getHostexClient = () => {
+    if (!config.accessToken) {
+      throw new Error('accessToken is required. Please configure your Hostex API access token.');
+    }
+    if (!hostexClient) {
+      hostexClient = new HostexClient({
+        accessToken: config.accessToken,
+      });
+    }
+    return hostexClient;
+  };
 
   // Helper function to check if accessToken is configured
   const requireAccessToken = () => {
@@ -46,9 +54,9 @@ export default async function createServer({
   let isLoggedIn = false;
 
   // Login if email and password are provided
-  if (config.email && config.password) {
+  if (config.email && config.password && config.accessToken) {
     try {
-      await hostexClient.login({
+      await getHostexClient().login({
         account: config.email,
         password: config.password,
       });
@@ -71,7 +79,7 @@ export default async function createServer({
     },
     async ({ offset, limit, id }) => {
       requireAccessToken();
-      const result = await hostexClient.listProperties({ offset, limit, id });
+      const result = await getHostexClient().listProperties({ offset, limit, id });
       return result.data;
     }
   );
@@ -86,7 +94,7 @@ export default async function createServer({
     },
     async ({ offset, limit }) => {
       requireAccessToken();
-      const result = await hostexClient.listRoomTypes({ offset, limit });
+      const result = await getHostexClient().listRoomTypes({ offset, limit });
       return result.data;
     }
   );
@@ -109,7 +117,7 @@ export default async function createServer({
     },
     async (params) => {
       requireAccessToken();
-      const result = await hostexClient.listReservations(params as any);
+      const result = await getHostexClient().listReservations(params as any);
       return result.data;
     }
   );
@@ -136,7 +144,7 @@ export default async function createServer({
     },
     async (data) => {
       requireAccessToken();
-      const result = await hostexClient.createReservation(data as any);
+      const result = await getHostexClient().createReservation(data as any);
       return result.data;
     }
   );
@@ -150,7 +158,7 @@ export default async function createServer({
     },
     async ({ reservation_code }) => {
       requireAccessToken();
-      const result = await hostexClient.cancelReservation(reservation_code);
+      const result = await getHostexClient().cancelReservation(reservation_code);
       return result;
     }
   );
@@ -165,7 +173,7 @@ export default async function createServer({
     },
     async ({ stay_code, lock_code }) => {
       requireAccessToken();
-      const result = await hostexClient.updateLockCode(stay_code, lock_code);
+      const result = await getHostexClient().updateLockCode(stay_code, lock_code);
       return result;
     }
   );
@@ -179,7 +187,7 @@ export default async function createServer({
     },
     async ({ stay_code }) => {
       requireAccessToken();
-      const result = await hostexClient.getCustomFields(stay_code);
+      const result = await getHostexClient().getCustomFields(stay_code);
       return result.data;
     }
   );
@@ -194,7 +202,7 @@ export default async function createServer({
     },
     async ({ stay_code, custom_fields }) => {
       requireAccessToken();
-      const result = await hostexClient.updateCustomFields(stay_code, custom_fields);
+      const result = await getHostexClient().updateCustomFields(stay_code, custom_fields);
       return result;
     }
   );
@@ -210,7 +218,7 @@ export default async function createServer({
     },
     async (params) => {
       requireAccessToken();
-      const result = await hostexClient.listAvailabilities(params);
+      const result = await getHostexClient().listAvailabilities(params);
       return result.data;
     }
   );
@@ -228,7 +236,7 @@ export default async function createServer({
     },
     async (data) => {
       requireAccessToken();
-      const result = await hostexClient.updateAvailabilities(data as any);
+      const result = await getHostexClient().updateAvailabilities(data as any);
       return result;
     }
   );
@@ -243,7 +251,7 @@ export default async function createServer({
     },
     async (params) => {
       requireAccessToken();
-      const result = await hostexClient.listConversations(params);
+      const result = await getHostexClient().listConversations(params);
       return result.data;
     }
   );
@@ -257,7 +265,7 @@ export default async function createServer({
     },
     async ({ conversation_id }) => {
       requireAccessToken();
-      const result = await hostexClient.getConversation(conversation_id);
+      const result = await getHostexClient().getConversation(conversation_id);
       return result.data;
     }
   );
@@ -273,7 +281,7 @@ export default async function createServer({
     },
     async ({ conversation_id, message, jpeg_base64 }) => {
       requireAccessToken();
-      const result = await hostexClient.sendMessage(conversation_id, { message, jpeg_base64 });
+      const result = await getHostexClient().sendMessage(conversation_id, { message, jpeg_base64 });
       return result;
     }
   );
@@ -293,7 +301,7 @@ export default async function createServer({
     },
     async (params) => {
       requireAccessToken();
-      const result = await hostexClient.listReviews(params as any);
+      const result = await getHostexClient().listReviews(params as any);
       return result.data;
     }
   );
@@ -310,7 +318,7 @@ export default async function createServer({
     },
     async ({ reservation_code, ...data }) => {
       requireAccessToken();
-      const result = await hostexClient.createReview(reservation_code, data);
+      const result = await getHostexClient().createReview(reservation_code, data);
       return result;
     }
   );
@@ -336,7 +344,7 @@ export default async function createServer({
       if (!isLoggedIn) {
         throw new Error('Review posting requires login. Please provide email and password in config.');
       }
-      const result = await hostexClient.postGuestReview({
+      const result = await getHostexClient().postGuestReview({
         reservation_order_code,
         content,
         category_ratings: {
@@ -361,7 +369,7 @@ export default async function createServer({
     {},
     async () => {
       requireAccessToken();
-      const result = await hostexClient.listWebhooks();
+      const result = await getHostexClient().listWebhooks();
       return result.data;
     }
   );
@@ -375,7 +383,7 @@ export default async function createServer({
     },
     async ({ url }) => {
       requireAccessToken();
-      const result = await hostexClient.createWebhook(url);
+      const result = await getHostexClient().createWebhook(url);
       return result.data;
     }
   );
@@ -389,7 +397,7 @@ export default async function createServer({
     },
     async ({ webhook_id }) => {
       requireAccessToken();
-      const result = await hostexClient.deleteWebhook(webhook_id);
+      const result = await getHostexClient().deleteWebhook(webhook_id);
       return result;
     }
   );
@@ -408,7 +416,7 @@ export default async function createServer({
     },
     async (data) => {
       requireAccessToken();
-      const result = await hostexClient.getListingCalendar(data);
+      const result = await getHostexClient().getListingCalendar(data);
       return result.data;
     }
   );
@@ -427,7 +435,7 @@ export default async function createServer({
     },
     async (data) => {
       requireAccessToken();
-      const result = await hostexClient.updateListingPrices(data);
+      const result = await getHostexClient().updateListingPrices(data);
       return result;
     }
   );
@@ -439,7 +447,7 @@ export default async function createServer({
     {},
     async () => {
       requireAccessToken();
-      const result = await hostexClient.listCustomChannels();
+      const result = await getHostexClient().listCustomChannels();
       return result.data;
     }
   );
@@ -451,7 +459,7 @@ export default async function createServer({
     {},
     async () => {
       requireAccessToken();
-      const result = await hostexClient.listIncomeMethods();
+      const result = await getHostexClient().listIncomeMethods();
       return result.data;
     }
   );
