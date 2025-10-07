@@ -31,7 +31,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@smithery/sdk": "^1.6.6",
-    "hostex-ts": "^0.1.1",
+    "hostex-ts": "^0.2.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
