@@ -85,7 +85,6 @@ export default async function createServer({
       limit: z.number().optional().describe("Max results, max 100 (default: 20)"),
     },
     async ({ offset, limit }) => {
-      requireAccessToken();
       const result = await hostexClient.listRoomTypes({ offset, limit });
       return result.data;
     }
@@ -108,7 +107,6 @@ export default async function createServer({
       limit: z.number().optional(),
     },
     async (params) => {
-      requireAccessToken();
       const result = await hostexClient.listReservations(params as any);
       return result.data;
     }
@@ -135,7 +133,6 @@ export default async function createServer({
       remarks: z.string().optional(),
     },
     async (data) => {
-      requireAccessToken();
       const result = await hostexClient.createReservation(data as any);
       return result.data;
     }
@@ -149,7 +146,6 @@ export default async function createServer({
       reservation_code: z.string().describe("Reservation code to cancel"),
     },
     async ({ reservation_code }) => {
-      requireAccessToken();
       const result = await hostexClient.cancelReservation(reservation_code);
       return result;
     }
@@ -164,7 +160,6 @@ export default async function createServer({
       lock_code: z.string().describe("New lock code"),
     },
     async ({ stay_code, lock_code }) => {
-      requireAccessToken();
       const result = await hostexClient.updateLockCode(stay_code, lock_code);
       return result;
     }
@@ -178,7 +173,6 @@ export default async function createServer({
       stay_code: z.string().describe("Stay code"),
     },
     async ({ stay_code }) => {
-      requireAccessToken();
       const result = await hostexClient.getCustomFields(stay_code);
       return result.data;
     }
@@ -193,7 +187,6 @@ export default async function createServer({
       custom_fields: z.record(z.any()).describe("Custom fields as key-value pairs"),
     },
     async ({ stay_code, custom_fields }) => {
-      requireAccessToken();
       const result = await hostexClient.updateCustomFields(stay_code, custom_fields);
       return result;
     }
@@ -209,7 +202,6 @@ export default async function createServer({
       end_date: z.string().describe("End date (YYYY-MM-DD)"),
     },
     async (params) => {
-      requireAccessToken();
       const result = await hostexClient.listAvailabilities(params);
       return result.data;
     }
@@ -227,7 +219,6 @@ export default async function createServer({
       available: z.boolean().describe("Availability status"),
     },
     async (data) => {
-      requireAccessToken();
       const result = await hostexClient.updateAvailabilities(data as any);
       return result;
     }
@@ -242,7 +233,6 @@ export default async function createServer({
       limit: z.number().optional(),
     },
     async (params) => {
-      requireAccessToken();
       const result = await hostexClient.listConversations(params);
       return result.data;
     }
@@ -256,7 +246,6 @@ export default async function createServer({
       conversation_id: z.string().describe("Conversation ID"),
     },
     async ({ conversation_id }) => {
-      requireAccessToken();
       const result = await hostexClient.getConversation(conversation_id);
       return result.data;
     }
@@ -272,7 +261,6 @@ export default async function createServer({
       jpeg_base64: z.string().optional().describe("Base64 encoded JPEG image"),
     },
     async ({ conversation_id, message, jpeg_base64 }) => {
-      requireAccessToken();
       const result = await hostexClient.sendMessage(conversation_id, { message, jpeg_base64 });
       return result;
     }
@@ -292,7 +280,6 @@ export default async function createServer({
       limit: z.number().optional(),
     },
     async (params) => {
-      requireAccessToken();
       const result = await hostexClient.listReviews(params as any);
       return result.data;
     }
@@ -309,7 +296,6 @@ export default async function createServer({
       host_reply_content: z.string().optional().describe("Reply to guest review"),
     },
     async ({ reservation_code, ...data }) => {
-      requireAccessToken();
       const result = await hostexClient.createReview(reservation_code, data);
       return result;
     }
@@ -332,7 +318,6 @@ export default async function createServer({
       communication_content: z.string().optional().describe("Additional communication comments"),
     },
     async ({ reservation_order_code, content, recommend, overall_rating, cleanliness, cleanliness_content, respect_of_house_rules, respect_house_rules_content, communication, communication_content }) => {
-      requireAccessToken();
       if (!isLoggedIn) {
         throw new Error('Review posting requires login. Please provide email and password in config.');
       }
@@ -360,7 +345,6 @@ export default async function createServer({
     "List configured webhooks",
     {},
     async () => {
-      requireAccessToken();
       const result = await hostexClient.listWebhooks();
       return result.data;
     }
@@ -374,7 +358,6 @@ export default async function createServer({
       url: z.string().describe("Webhook URL endpoint"),
     },
     async ({ url }) => {
-      requireAccessToken();
       const result = await hostexClient.createWebhook(url);
       return result.data;
     }
@@ -388,7 +371,6 @@ export default async function createServer({
       webhook_id: z.number().describe("Webhook ID to delete"),
     },
     async ({ webhook_id }) => {
-      requireAccessToken();
       const result = await hostexClient.deleteWebhook(webhook_id);
       return result;
     }
@@ -407,7 +389,6 @@ export default async function createServer({
       })),
     },
     async (data) => {
-      requireAccessToken();
       const result = await hostexClient.getListingCalendar(data);
       return result.data;
     }
@@ -426,7 +407,6 @@ export default async function createServer({
       })),
     },
     async (data) => {
-      requireAccessToken();
       const result = await hostexClient.updateListingPrices(data);
       return result;
     }
@@ -438,7 +418,6 @@ export default async function createServer({
     "Get custom channels from Custom Options Page",
     {},
     async () => {
-      requireAccessToken();
       const result = await hostexClient.listCustomChannels();
       return result.data;
     }
@@ -450,7 +429,6 @@ export default async function createServer({
     "Get income methods from Custom Options Page",
     {},
     async () => {
-      requireAccessToken();
       const result = await hostexClient.listIncomeMethods();
       return result.data;
     }
