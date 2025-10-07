@@ -33,6 +33,9 @@ export default async function createServer({
     accessToken: config.accessToken,
   });
 
+  // Track login state for review posting
+  let isLoggedIn = false;
+
   // Login if email and password are provided
   if (config.email && config.password) {
     try {
@@ -41,6 +44,7 @@ export default async function createServer({
         password: config.password,
       });
       console.error('✓ Logged in to Hostex successfully');
+      isLoggedIn = true;
     } catch (error) {
       console.error('⚠️  Hostex login failed:', error instanceof Error ? error.message : error);
       console.error('   Review posting will not be available');
@@ -304,17 +308,20 @@ export default async function createServer({
       communication_content: z.string().optional().describe("Additional communication comments"),
     },
     async ({ reservation_order_code, content, recommend, overall_rating, cleanliness, cleanliness_content, respect_of_house_rules, respect_house_rules_content, communication, communication_content }) => {
+      if (!isLoggedIn) {
+        throw new Error('Review posting requires login. Please provide email and password in config.');
+      }
       const result = await hostexClient.postGuestReview({
         reservation_order_code,
         content,
         category_ratings: {
-          recommend: parseInt(recommend) as 0 | 1,
-          overall_rating: parseInt(overall_rating) as 1 | 2 | 3 | 4 | 5,
-          cleanliness: parseInt(cleanliness) as 1 | 2 | 3 | 4 | 5,
+          recommend: Number(recommend) as 0 | 1,
+          overall_rating: Number(overall_rating) as 1 | 2 | 3 | 4 | 5,
+          cleanliness: Number(cleanliness) as 1 | 2 | 3 | 4 | 5,
           cleanliness_content: cleanliness_content || '',
-          respect_of_house_rules: parseInt(respect_of_house_rules) as 1 | 2 | 3 | 4 | 5,
+          respect_of_house_rules: Number(respect_of_house_rules) as 1 | 2 | 3 | 4 | 5,
           respect_house_rules_content: respect_house_rules_content || '',
-          communication: parseInt(communication) as 1 | 2 | 3 | 4 | 5,
+          communication: Number(communication) as 1 | 2 | 3 | 4 | 5,
           communication_content: communication_content || '',
         }
       });
