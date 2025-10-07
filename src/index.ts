@@ -464,6 +464,6 @@ export default async function createServer({
     }
   );
 
-  // Return the server object (Smithery CLI handles transport)
-  return server.server;
+  // Return the MCP server object (Smithery handles transport wrapping)
+  return server;
 }
