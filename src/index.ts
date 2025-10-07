@@ -29,8 +29,9 @@ export default async function createServer({
   });
 
   // Initialize Hostex client with provided API token
+  // Use empty string as fallback for scanning phase
   const hostexClient = new HostexClient({
-    accessToken: config.accessToken,
+    accessToken: config.accessToken || '',
   });
 
   // Track login state for review posting
