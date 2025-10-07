@@ -21,9 +21,6 @@ export default async function createServer({
 }: {
   config: z.infer<typeof configSchema>
 }) {
-  // Validate configuration
-  const validatedConfig = configSchema.parse(config);
-
   // Create MCP server
   const server = new McpServer({
     name: "hostex-mcp",
@@ -33,18 +30,18 @@ export default async function createServer({
 
   // Initialize Hostex client with provided API token
   const hostexClient = new HostexClient({
-    accessToken: validatedConfig.accessToken,
+    accessToken: config.accessToken,
   });
 
   // Track login state for review posting
   let isLoggedIn = false;
 
   // Login if email and password are provided
-  if (validatedConfig.email && validatedConfig.password) {
+  if (config.email && config.password) {
     try {
       await hostexClient.login({
-        account: validatedConfig.email,
-        password: validatedConfig.password,
+        account: config.email,
+        password: config.password,
       });
       console.error('✓ Logged in to Hostex successfully');
       isLoggedIn = true;
