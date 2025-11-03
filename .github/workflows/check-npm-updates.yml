@@ -8,6 +8,7 @@ on:
 
 jobs:
   check-updates:
+    timeout-minutes: 5
     runs-on: ubuntu-latest
 
     steps:
