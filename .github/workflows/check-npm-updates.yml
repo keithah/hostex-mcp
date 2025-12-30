@@ -5,11 +5,10 @@ on:
     # Run every hour
     - cron: '0 * * * *'
   workflow_dispatch: # Allow manual trigger
-
 jobs:
   check-updates:
     timeout-minutes: 5
-    runs-on: ubuntu-latest
+    runs-on: tenki-standard-medium-4c-8g
 
     steps:
       - name: Checkout code
