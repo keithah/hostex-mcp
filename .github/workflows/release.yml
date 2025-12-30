@@ -3,12 +3,12 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers on version tags like v0.2.0
+      - 'v*.*.*' # Triggers on version tags like v0.2.0
 
 jobs:
   release:
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: tenki-standard-medium-4c-8g
 
     permissions:
       contents: write
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for changelog
+          fetch-depth: 0 # Fetch full history for changelog
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
