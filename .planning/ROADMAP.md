@@ -29,10 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Structured logging writes only to stderr without contaminating stdout
   4. Configuration validates on startup with Zod schemas and fails fast on misconfiguration
   5. Input validation enforces constraints (max limits, regex patterns, date ranges)
-**Plans**: TBD (1-3 plans)
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: [TBD during planning]
+- [ ] 01-01-PLAN.md — Upgrade MCP SDK to 1.27.0, Zod to v4, resolve vulnerabilities
+- [ ] 01-02-PLAN.md — Create Pino logger + error handler, wrap all 22 tool handlers
+- [ ] 01-03-PLAN.md — Config validation at startup, enhanced input validation constraints
 
 ### Phase 2: Type Safety & API Response Validation
 **Goal**: All type assertions eliminated with runtime validation catching API schema changes
@@ -96,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security Foundations | 0/TBD | Not started | - |
+| 1. Security Foundations | 0/3 | Planned | - |
 | 2. Type Safety | 0/TBD | Not started | - |
 | 3. Testing Infrastructure | 0/TBD | Not started | - |
 | 4. Architecture & Resilience | 0/TBD | Not started | - |
@@ -104,4 +106,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 ---
 
 **Traceability:** All 46 active requirements (REQ-001 through REQ-046) mapped to phases.
-**Last updated:** 2026-02-16 during roadmap creation
+**Last updated:** 2026-02-16 during phase 1 planning
