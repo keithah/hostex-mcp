@@ -98,6 +98,59 @@ Modernize existing Hostex MCP server from 370-line prototype to production-ready
 - **REQ-045**: Test MCP server with Claude Desktop, Poke, and other MCP clients
 - **REQ-046**: Document known Hostex API limitations (3s webhook timeout, beta status, sync issues)
 
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| REQ-001 | Phase 1 | Pending |
+| REQ-002 | Phase 1 | Pending |
+| REQ-003 | Phase 1 | Pending |
+| REQ-004 | Phase 1 | Pending |
+| REQ-005 | Phase 1 | Pending |
+| REQ-006 | Phase 1 | Pending |
+| REQ-007 | Phase 1 | Pending |
+| REQ-008 | Phase 1 | Pending |
+| REQ-009 | Phase 2 | Pending |
+| REQ-010 | Phase 2 | Pending |
+| REQ-011 | Phase 2 | Pending |
+| REQ-012 | Phase 2 | Pending |
+| REQ-013 | Phase 2 | Pending |
+| REQ-014 | Phase 2 | Pending |
+| REQ-015 | Phase 3 | Pending |
+| REQ-016 | Phase 3 | Pending |
+| REQ-017 | Phase 3 | Pending |
+| REQ-018 | Phase 3 | Pending |
+| REQ-019 | Phase 3 | Pending |
+| REQ-020 | Phase 3 | Pending |
+| REQ-021 | Phase 3 | Pending |
+| REQ-022 | Phase 3 | Pending |
+| REQ-023 | Phase 4 | Pending |
+| REQ-024 | Phase 4 | Pending |
+| REQ-025 | Phase 4 | Pending |
+| REQ-026 | Phase 4 | Pending |
+| REQ-027 | Phase 4 | Pending |
+| REQ-028 | Phase 4 | Pending |
+| REQ-029 | Phase 4 | Pending |
+| REQ-030 | Phase 4 | Pending |
+| REQ-031 | Phase 4 | Pending |
+| REQ-032 | Phase 4 | Pending |
+| REQ-033 | Phase 4 | Pending |
+| REQ-034 | Phase 4 | Pending |
+| REQ-035 | Phase 4 | Pending |
+| REQ-036 | Phase 4 | Pending |
+| REQ-037 | Phase 4 | Pending |
+| REQ-038 | Phase 4 | Pending |
+| REQ-039 | Phase 4 | Pending |
+| REQ-040 | Phase 4 | Pending |
+| REQ-041 | Phase 4 | Pending |
+| REQ-042 | Phase 4 | Pending |
+| REQ-043 | Phase 4 | Pending |
+| REQ-044 | Phase 4 | Pending |
+| REQ-045 | Phase 4 | Pending |
+| REQ-046 | Phase 4 | Pending |
+
+**Coverage:** 46/46 requirements mapped (100%)
+
 ## Out of Scope
 
 <!-- Explicitly deferred to v2 or beyond -->
