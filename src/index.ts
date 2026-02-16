@@ -24,7 +24,7 @@ export default function createServer({
     name: "hostex-mcp",
     title: "Hostex Property Management",
     version: "0.2.0"
-  });
+  }) as any;
 
   // Initialize Hostex client with provided API token
   const hostexClient = new HostexClient({
@@ -68,10 +68,10 @@ export default function createServer({
       reservation_code: z.string().optional(),
       property_id: z.number().optional(),
       status: z.enum(['wait_accept', 'wait_pay', 'accepted', 'cancelled', 'denied', 'timeout']).optional(),
-      start_check_in_date: z.string().optional().describe("YYYY-MM-DD format"),
-      end_check_in_date: z.string().optional().describe("YYYY-MM-DD format"),
-      start_check_out_date: z.string().optional().describe("YYYY-MM-DD format"),
-      end_check_out_date: z.string().optional().describe("YYYY-MM-DD format"),
+      start_check_in_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
+      end_check_in_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
+      start_check_out_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
+      end_check_out_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
       order_by: z.string().optional().describe("Sort field (default: booked_at)"),
       offset: z.number().optional(),
       limit: z.number().optional(),
@@ -89,8 +89,8 @@ export default function createServer({
     {
       property_id: z.string().describe("Property ID"),
       custom_channel_id: z.number().describe("Custom channel ID"),
-      check_in_date: z.string().describe("Check-in date (YYYY-MM-DD)"),
-      check_out_date: z.string().describe("Check-out date (YYYY-MM-DD)"),
+      check_in_date: z.iso.date().describe("Check-in date (YYYY-MM-DD)"),
+      check_out_date: z.iso.date().describe("Check-out date (YYYY-MM-DD)"),
       guest_name: z.string().describe("Primary guest name"),
       currency: z.string().describe("Currency code (e.g., USD)"),
       rate_amount: z.number().describe("Total rate amount in cents"),
@@ -154,7 +154,7 @@ export default function createServer({
     "Update custom fields for a stay. Custom fields can be used in automated messages using {{cf.field_name}} syntax.",
     {
       stay_code: z.string().describe("Stay code"),
-      custom_fields: z.record(z.any()).describe("Custom fields as key-value pairs"),
+      custom_fields: z.record(z.string(), z.any()).describe("Custom fields as key-value pairs"),
     },
     async ({ stay_code, custom_fields }) => {
       const result = await hostexClient.updateCustomFields(stay_code, custom_fields);
@@ -168,8 +168,8 @@ export default function createServer({
     "Query property availability for date ranges",
     {
       property_ids: z.string().describe("Comma-separated property IDs (max 100)"),
-      start_date: z.string().describe("Start date (YYYY-MM-DD)"),
-      end_date: z.string().describe("End date (YYYY-MM-DD)"),
+      start_date: z.iso.date().describe("Start date (YYYY-MM-DD)"),
+      end_date: z.iso.date().describe("End date (YYYY-MM-DD)"),
     },
     async (params) => {
       const result = await hostexClient.listAvailabilities(params);
@@ -183,9 +183,9 @@ export default function createServer({
     "Update property availability status for specific dates or date ranges",
     {
       property_ids: z.array(z.number()).describe("Array of property IDs to update"),
-      start_date: z.string().optional().describe("Start date (YYYY-MM-DD)"),
-      end_date: z.string().optional().describe("End date (YYYY-MM-DD)"),
-      dates: z.array(z.string()).optional().describe("Specific dates array (alternative to date range)"),
+      start_date: z.iso.date().optional().describe("Start date (YYYY-MM-DD)"),
+      end_date: z.iso.date().optional().describe("End date (YYYY-MM-DD)"),
+      dates: z.array(z.iso.date()).optional().describe("Specific dates array (alternative to date range)"),
       available: z.boolean().describe("Availability status"),
     },
     async (data) => {
@@ -244,8 +244,8 @@ export default function createServer({
       reservation_code: z.string().optional(),
       property_id: z.number().optional(),
       review_status: z.string().optional(),
-      start_check_out_date: z.string().optional().describe("YYYY-MM-DD format"),
-      end_check_out_date: z.string().optional().describe("YYYY-MM-DD format"),
+      start_check_out_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
+      end_check_out_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
       offset: z.number().optional(),
       limit: z.number().optional(),
     },
@@ -313,8 +313,8 @@ export default function createServer({
     "hostex_get_listing_calendar",
     "Get calendar information for multiple listings",
     {
-      start_date: z.string().describe("Calendar start date (YYYY-MM-DD)"),
-      end_date: z.string().describe("Calendar end date (YYYY-MM-DD)"),
+      start_date: z.iso.date().describe("Calendar start date (YYYY-MM-DD)"),
+      end_date: z.iso.date().describe("Calendar end date (YYYY-MM-DD)"),
       listings: z.array(z.object({
         channel_type: z.string(),
         listing_id: z.string(),
@@ -334,7 +334,7 @@ export default function createServer({
       channel_type: z.string().describe("Channel type (e.g., airbnb)"),
       listing_id: z.string().describe("Channel listing ID"),
       prices: z.array(z.object({
-        date: z.string(),
+        date: z.iso.date(),
         price: z.number(),
       })),
     },
