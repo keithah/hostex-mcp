@@ -46,10 +46,12 @@ Plans:
   3. Proper TypeScript types extracted from hostex-ts library
   4. Type-safe error responses follow structured format
   5. Response sanitization prevents information leakage in errors
-**Plans**: TBD (1-3 plans)
+**Plans:** 3 plans
 
 Plans:
-- [ ] 02-01: [TBD during planning]
+- [ ] 02-01-PLAN.md — Build hostex-ts type aliases plus reusable envelope/data validation foundation
+- [ ] 02-02-PLAN.md — Remove all five `as any` and apply mandatory runtime response validation in handlers
+- [ ] 02-03-PLAN.md — Enforce structured sanitized errors and restore `noImplicitAny` strictness
 
 ### Phase 3: Testing Infrastructure & Initial Coverage
 **Goal**: Comprehensive test coverage protects against regressions during refactoring
@@ -99,7 +101,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Security Foundations | 0/3 | Planned | - |
-| 2. Type Safety | 0/TBD | Not started | - |
+| 2. Type Safety | 0/3 | Planned | - |
 | 3. Testing Infrastructure | 0/TBD | Not started | - |
 | 4. Architecture & Resilience | 0/TBD | Not started | - |
 
