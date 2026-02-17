@@ -117,7 +117,7 @@ const incomeMethodSchema = z.strictObject({
   name: z.string(),
 });
 
-const emptyDataSchema = z.union([z.undefined(), z.null(), z.record(z.string(), z.unknown())]);
+const emptyDataSchema = z.union([z.undefined(), z.null(), z.strictObject({})]);
 
 export const toolSchemaMap = {
   hostex_list_properties: z.strictObject({
