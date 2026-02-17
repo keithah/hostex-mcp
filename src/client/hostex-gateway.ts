@@ -24,6 +24,7 @@ import {
   observeGatewaySuccess,
   observeHostexOutboundError,
   observeHostexOutboundSuccess,
+  observeRateLimitMetadataMode,
   observeToolError,
   observeToolSuccess,
 } from "../observability/instrumentation.js";
@@ -97,7 +98,10 @@ export function createHostexGateway(options: HostexGatewayOptions): HostexApiCli
             const headers = extractResponseHeaders(response);
             const metadata = parseRateLimitMetadata(headers);
             if (metadata) {
+              observeRateLimitMetadataMode(operation, "headers");
               options.onRateLimitMetadata?.(metadata);
+            } else {
+              observeRateLimitMetadataMode(operation, "fallback");
             }
 
             return response;

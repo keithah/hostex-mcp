@@ -145,4 +145,59 @@ describe("createHostexGateway", () => {
       TimeoutError,
     );
   });
+
+  it("parses rate-limit metadata from response headers when available", async () => {
+    const onRateLimitMetadata = vi.fn();
+    const listProperties = vi.fn(async () => ({
+      data: { properties: [], total: 0 },
+      headers: {
+        "x-ratelimit-limit": "120",
+        "x-ratelimit-remaining": "119",
+        "x-ratelimit-reset": "1700000000",
+        "retry-after": "2",
+      },
+    })) as unknown as HostexApiClient["listProperties"];
+    const clientFactory = createFactory(() =>
+      createHostexClientStub({ listProperties }),
+    );
+
+    const gateway = createHostexGateway({
+      clientFactory,
+      retryOptions: { retries: 0 },
+      throttleOptions: { maxConcurrent: 1, minTimeMs: 0 },
+      timeoutMs: 200,
+      onRateLimitMetadata,
+    });
+
+    await gateway.listProperties({ offset: 0, limit: 1 });
+
+    expect(onRateLimitMetadata).toHaveBeenCalledWith({
+      limit: 120,
+      remaining: 119,
+      resetAtEpochSeconds: 1700000000,
+      retryAfterSeconds: 2,
+    });
+  });
+
+  it("keeps fallback behavior when response headers are unavailable", async () => {
+    const onRateLimitMetadata = vi.fn();
+    const listProperties = vi.fn(async () => ({
+      data: { properties: [], total: 0 },
+    })) as unknown as HostexApiClient["listProperties"];
+    const clientFactory = createFactory(() =>
+      createHostexClientStub({ listProperties }),
+    );
+
+    const gateway = createHostexGateway({
+      clientFactory,
+      retryOptions: { retries: 0 },
+      throttleOptions: { maxConcurrent: 1, minTimeMs: 0 },
+      timeoutMs: 200,
+      onRateLimitMetadata,
+    });
+
+    await gateway.listProperties({ offset: 0, limit: 1 });
+
+    expect(onRateLimitMetadata).not.toHaveBeenCalled();
+  });
 });

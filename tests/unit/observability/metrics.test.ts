@@ -73,4 +73,55 @@ describe("observability metrics", () => {
     expect(output).toContain("hostex_mcp_tool_errors_total{tool=\"listProperties\",category=\"Error\"} 1");
     expect(output).toContain("hostex_mcp_gateway_requests_total{operation=\"listProperties\",status=\"error\"} 1");
   });
+
+  it("records header-based rate-limit mode when metadata is available", async () => {
+    const onRateLimitMetadata = vi.fn();
+    const gateway = createHostexGateway({
+      clientFactory: () =>
+        createClientStub({
+          listProperties: vi.fn(async () => ({
+            data: { properties: [], total: 0 },
+            headers: {
+              "x-ratelimit-limit": "60",
+              "x-ratelimit-remaining": "59",
+              "x-ratelimit-reset": "1700000000",
+            },
+          })) as unknown as HostexApiClient["listProperties"],
+        }),
+      onRateLimitMetadata,
+      retryOptions: { retries: 0 },
+      throttleOptions: { maxConcurrent: 1, minTimeMs: 0 },
+      timeoutMs: 100,
+    });
+
+    await gateway.listProperties({ offset: 0, limit: 1 });
+
+    expect(onRateLimitMetadata).toHaveBeenCalledWith({
+      limit: 60,
+      remaining: 59,
+      resetAtEpochSeconds: 1700000000,
+      retryAfterSeconds: undefined,
+    });
+
+    const output = await metricsRegistry.metrics();
+    expect(output).toContain(
+      "hostex_mcp_rate_limit_metadata_mode_total{operation=\"listProperties\",mode=\"headers\"} 1",
+    );
+  });
+
+  it("records fallback rate-limit mode when metadata is unavailable", async () => {
+    const gateway = createHostexGateway({
+      clientFactory: () => createClientStub(),
+      retryOptions: { retries: 0 },
+      throttleOptions: { maxConcurrent: 1, minTimeMs: 0 },
+      timeoutMs: 100,
+    });
+
+    await gateway.listProperties({ offset: 0, limit: 1 });
+
+    const output = await metricsRegistry.metrics();
+    expect(output).toContain(
+      "hostex_mcp_rate_limit_metadata_mode_total{operation=\"listProperties\",mode=\"fallback\"} 1",
+    );
+  });
 });
