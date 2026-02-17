@@ -94,10 +94,14 @@ Plans:
   11. All 22 tools validated end-to-end with real Hostex API credentials
   12. MCP server works with Claude Desktop, Poke, and standard MCP clients
   13. Known Hostex API limitations documented (webhook timeouts, sync issues)
-**Plans**: TBD (1-3 plans)
+**Plans**: 5 plans
 
 Plans:
-- [ ] 04-01: [TBD during planning]
+- [ ] 04-01-PLAN.md — Extract modular architecture with domain tool modules and composition-root registration
+- [ ] 04-02-PLAN.md — Implement HostexGateway resilience boundary with retry/throttle/timeout and per-request clients
+- [ ] 04-03-PLAN.md — Add observability instrumentation plus health/readiness/metrics operational endpoints
+- [ ] 04-04-PLAN.md — Establish CI/CD quality and security gates with release dependency checks
+- [ ] 04-05-PLAN.md — Complete production docs, client-validation matrix, and known-limits documentation
 
 ## Progress
 
