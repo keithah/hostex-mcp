@@ -71,4 +71,27 @@ describe("hostex-data-schemas", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("accepts live update_custom_fields success payload shape", () => {
+    const result = toolSchemaMap.hostex_update_custom_fields.safeParse({
+      custom_fields: {
+        mcp_e2e_cleanup: "set-123456",
+      },
+      updated_at: "2026-02-17T00:00:00Z",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("fails closed for malformed update_custom_fields payloads", () => {
+    const missingCustomFields = toolSchemaMap.hostex_update_custom_fields.safeParse({
+      updated_at: "2026-02-17T00:00:00Z",
+    });
+    const invalidCustomFieldsType = toolSchemaMap.hostex_update_custom_fields.safeParse({
+      custom_fields: ["not", "an", "object"],
+    });
+
+    expect(missingCustomFields.success).toBe(false);
+    expect(invalidCustomFieldsType.success).toBe(false);
+  });
 });
