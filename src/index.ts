@@ -61,7 +61,10 @@ import type {
 
 // Configuration schema - automatically detected by Smithery
 export const configSchema = z.object({
-  accessToken: z.string().describe("Your Hostex API access token"),
+  accessToken: z
+    .string()
+    .min(1, { error: "Hostex API access token is required" })
+    .describe("Your Hostex API access token"),
 });
 
 export default function createServer({
@@ -69,6 +72,22 @@ export default function createServer({
 }: {
   config: z.infer<typeof configSchema>
 }) {
+  let validatedConfig: z.infer<typeof configSchema>;
+  try {
+    validatedConfig = configSchema.parse(config);
+    logger.info({ config: { accessToken: "***" } }, "Configuration validated successfully");
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const validationErrors = error.issues.map((issue) => {
+        const path = issue.path.join(".");
+        return path ? `${path}: ${issue.message}` : issue.message;
+      });
+      logger.error({ validationErrors }, "Configuration validation failed");
+      throw new Error(`Configuration validation failed: ${validationErrors.join(", ")}`);
+    }
+    throw error;
+  }
+
   // Create MCP server
   const server = new McpServer({
     name: "hostex-mcp",
@@ -79,7 +98,7 @@ export default function createServer({
 
   // Initialize Hostex client with provided API token
   const hostexClient = new HostexClient({
-    accessToken: config.accessToken,
+    accessToken: validatedConfig.accessToken,
   });
 
   // Register list_properties tool
