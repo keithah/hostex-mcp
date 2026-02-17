@@ -8,6 +8,49 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { HostexClient } from 'hostex-ts';
+import type {
+  CancelReservationParams,
+  CancelReservationResponse,
+  CreateReservationData,
+  CreateReservationResponse,
+  CreateReviewParams,
+  CreateReviewResponse,
+  CreateWebhookParams,
+  CreateWebhookResponse,
+  DeleteWebhookParams,
+  DeleteWebhookResponse,
+  GetConversationParams,
+  GetConversationResponse,
+  GetCustomFieldsParams,
+  GetCustomFieldsResponse,
+  GetListingCalendarData,
+  GetListingCalendarResponse,
+  ListAvailabilitiesParams,
+  ListAvailabilitiesResponse,
+  ListConversationsParams,
+  ListConversationsResponse,
+  ListCustomChannelsResponse,
+  ListIncomeMethodsResponse,
+  ListPropertiesParams,
+  ListPropertiesResponse,
+  ListReservationsParams,
+  ListReservationsResponse,
+  ListReviewsParams,
+  ListReviewsResponse,
+  ListRoomTypesParams,
+  ListRoomTypesResponse,
+  ListWebhooksResponse,
+  SendMessageParams,
+  SendMessageResponse,
+  UpdateAvailabilitiesData,
+  UpdateAvailabilitiesResponse,
+  UpdateCustomFieldsParams,
+  UpdateCustomFieldsResponse,
+  UpdateListingPricesData,
+  UpdateListingPricesResponse,
+  UpdateLockCodeParams,
+  UpdateLockCodeResponse,
+} from "./types/hostex-client.js";
 
 // Configuration schema - automatically detected by Smithery
 export const configSchema = z.object({
@@ -19,12 +62,21 @@ export default function createServer({
 }: {
   config: z.infer<typeof configSchema>
 }) {
+  const toToolResult = (data: unknown) => ({
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(data),
+      },
+    ],
+  });
+
   // Create MCP server
   const server = new McpServer({
     name: "hostex-mcp",
     title: "Hostex Property Management",
     version: "0.2.0"
-  }) as any;
+  });
 
   // Initialize Hostex client with provided API token
   const hostexClient = new HostexClient({
@@ -40,9 +92,14 @@ export default function createServer({
       limit: z.number().optional().describe("Maximum results to return, max 100 (default: 20)"),
       id: z.number().optional().describe("Filter by specific property ID"),
     },
-    async ({ offset, limit, id }) => {
-      const result = await hostexClient.listProperties({ offset, limit, id });
-      return result.data;
+    async (params: ListPropertiesParams = {}) => {
+      const { offset, limit, id } = params;
+      const result: ListPropertiesResponse = await hostexClient.listProperties({
+        offset,
+        limit,
+        id,
+      });
+      return toToolResult(result.data);
     }
   );
 
@@ -54,9 +111,13 @@ export default function createServer({
       offset: z.number().optional().describe("Starting point (default: 0)"),
       limit: z.number().optional().describe("Max results, max 100 (default: 20)"),
     },
-    async ({ offset, limit }) => {
-      const result = await hostexClient.listRoomTypes({ offset, limit });
-      return result.data;
+    async (params: ListRoomTypesParams = {}) => {
+      const { offset, limit } = params;
+      const result: ListRoomTypesResponse = await hostexClient.listRoomTypes({
+        offset,
+        limit,
+      });
+      return toToolResult(result.data);
     }
   );
 
@@ -76,9 +137,11 @@ export default function createServer({
       offset: z.number().optional(),
       limit: z.number().optional(),
     },
-    async (params) => {
-      const result = await hostexClient.listReservations(params as any);
-      return result.data;
+    async (params: ListReservationsParams) => {
+      const result: ListReservationsResponse = await hostexClient.listReservations(
+        params,
+      );
+      return toToolResult(result.data);
     }
   );
 
@@ -102,9 +165,11 @@ export default function createServer({
       mobile: z.string().optional(),
       remarks: z.string().optional(),
     },
-    async (data) => {
-      const result = await hostexClient.createReservation(data as any);
-      return result.data;
+    async (data: CreateReservationData) => {
+      const result: CreateReservationResponse = await hostexClient.createReservation(
+        data,
+      );
+      return toToolResult(result.data);
     }
   );
 
@@ -115,9 +180,11 @@ export default function createServer({
     {
       reservation_code: z.string().describe("Reservation code to cancel"),
     },
-    async ({ reservation_code }) => {
-      const result = await hostexClient.cancelReservation(reservation_code);
-      return result;
+    async ({ reservation_code }: { reservation_code: CancelReservationParams[0] }) => {
+      const result: CancelReservationResponse = await hostexClient.cancelReservation(
+        reservation_code,
+      );
+      return toToolResult(result);
     }
   );
 
@@ -129,9 +196,18 @@ export default function createServer({
       stay_code: z.string().describe("Stay code"),
       lock_code: z.string().describe("New lock code"),
     },
-    async ({ stay_code, lock_code }) => {
-      const result = await hostexClient.updateLockCode(stay_code, lock_code);
-      return result;
+    async ({
+      stay_code,
+      lock_code,
+    }: {
+      stay_code: UpdateLockCodeParams[0];
+      lock_code: UpdateLockCodeParams[1];
+    }) => {
+      const result: UpdateLockCodeResponse = await hostexClient.updateLockCode(
+        stay_code,
+        lock_code,
+      );
+      return toToolResult(result);
     }
   );
 
@@ -142,9 +218,11 @@ export default function createServer({
     {
       stay_code: z.string().describe("Stay code"),
     },
-    async ({ stay_code }) => {
-      const result = await hostexClient.getCustomFields(stay_code);
-      return result.data;
+    async ({ stay_code }: { stay_code: GetCustomFieldsParams[0] }) => {
+      const result: GetCustomFieldsResponse = await hostexClient.getCustomFields(
+        stay_code,
+      );
+      return toToolResult(result.data);
     }
   );
 
@@ -156,9 +234,18 @@ export default function createServer({
       stay_code: z.string().describe("Stay code"),
       custom_fields: z.record(z.string(), z.any()).describe("Custom fields as key-value pairs"),
     },
-    async ({ stay_code, custom_fields }) => {
-      const result = await hostexClient.updateCustomFields(stay_code, custom_fields);
-      return result;
+    async ({
+      stay_code,
+      custom_fields,
+    }: {
+      stay_code: UpdateCustomFieldsParams[0];
+      custom_fields: UpdateCustomFieldsParams[1];
+    }) => {
+      const result: UpdateCustomFieldsResponse = await hostexClient.updateCustomFields(
+        stay_code,
+        custom_fields,
+      );
+      return toToolResult(result);
     }
   );
 
@@ -171,9 +258,10 @@ export default function createServer({
       start_date: z.iso.date().describe("Start date (YYYY-MM-DD)"),
       end_date: z.iso.date().describe("End date (YYYY-MM-DD)"),
     },
-    async (params) => {
-      const result = await hostexClient.listAvailabilities(params);
-      return result.data;
+    async (params: ListAvailabilitiesParams) => {
+      const result: ListAvailabilitiesResponse =
+        await hostexClient.listAvailabilities(params);
+      return toToolResult(result.data);
     }
   );
 
@@ -188,9 +276,10 @@ export default function createServer({
       dates: z.array(z.iso.date()).optional().describe("Specific dates array (alternative to date range)"),
       available: z.boolean().describe("Availability status"),
     },
-    async (data) => {
-      const result = await hostexClient.updateAvailabilities(data as any);
-      return result;
+    async (data: UpdateAvailabilitiesData) => {
+      const result: UpdateAvailabilitiesResponse =
+        await hostexClient.updateAvailabilities(data);
+      return toToolResult(result);
     }
   );
 
@@ -202,9 +291,10 @@ export default function createServer({
       offset: z.number().optional(),
       limit: z.number().optional(),
     },
-    async (params) => {
-      const result = await hostexClient.listConversations(params);
-      return result.data;
+    async (params: ListConversationsParams) => {
+      const result: ListConversationsResponse =
+        await hostexClient.listConversations(params);
+      return toToolResult(result.data);
     }
   );
 
@@ -215,9 +305,15 @@ export default function createServer({
     {
       conversation_id: z.string().describe("Conversation ID"),
     },
-    async ({ conversation_id }) => {
-      const result = await hostexClient.getConversation(conversation_id);
-      return result.data;
+    async ({
+      conversation_id,
+    }: {
+      conversation_id: GetConversationParams[0];
+    }) => {
+      const result: GetConversationResponse = await hostexClient.getConversation(
+        conversation_id,
+      );
+      return toToolResult(result.data);
     }
   );
 
@@ -230,9 +326,20 @@ export default function createServer({
       message: z.string().optional().describe("Text message content"),
       jpeg_base64: z.string().optional().describe("Base64 encoded JPEG image"),
     },
-    async ({ conversation_id, message, jpeg_base64 }) => {
-      const result = await hostexClient.sendMessage(conversation_id, { message, jpeg_base64 });
-      return result;
+    async ({
+      conversation_id,
+      message,
+      jpeg_base64,
+    }: {
+      conversation_id: SendMessageParams[0];
+      message?: SendMessageParams[1]["message"];
+      jpeg_base64?: SendMessageParams[1]["jpeg_base64"];
+    }) => {
+      const result: SendMessageResponse = await hostexClient.sendMessage(
+        conversation_id,
+        { message, jpeg_base64 },
+      );
+      return toToolResult(result);
     }
   );
 
@@ -249,9 +356,9 @@ export default function createServer({
       offset: z.number().optional(),
       limit: z.number().optional(),
     },
-    async (params) => {
-      const result = await hostexClient.listReviews(params as any);
-      return result.data;
+    async (params: ListReviewsParams) => {
+      const result: ListReviewsResponse = await hostexClient.listReviews(params);
+      return toToolResult(result.data);
     }
   );
 
@@ -265,9 +372,17 @@ export default function createServer({
       host_review_content: z.string().optional().describe("Review comment"),
       host_reply_content: z.string().optional().describe("Reply to guest review"),
     },
-    async ({ reservation_code, ...data }) => {
-      const result = await hostexClient.createReview(reservation_code, data);
-      return result;
+    async ({
+      reservation_code,
+      ...data
+    }: {
+      reservation_code: CreateReviewParams[0];
+    } & CreateReviewParams[1]) => {
+      const result: CreateReviewResponse = await hostexClient.createReview(
+        reservation_code,
+        data,
+      );
+      return toToolResult(result);
     }
   );
 
@@ -277,8 +392,8 @@ export default function createServer({
     "List configured webhooks",
     {},
     async () => {
-      const result = await hostexClient.listWebhooks();
-      return result.data;
+      const result: ListWebhooksResponse = await hostexClient.listWebhooks();
+      return toToolResult(result.data);
     }
   );
 
@@ -289,9 +404,9 @@ export default function createServer({
     {
       url: z.string().describe("Webhook URL endpoint"),
     },
-    async ({ url }) => {
-      const result = await hostexClient.createWebhook(url);
-      return result.data;
+    async ({ url }: { url: CreateWebhookParams[0] }) => {
+      const result: CreateWebhookResponse = await hostexClient.createWebhook(url);
+      return toToolResult(result.data);
     }
   );
 
@@ -302,9 +417,11 @@ export default function createServer({
     {
       webhook_id: z.number().describe("Webhook ID to delete"),
     },
-    async ({ webhook_id }) => {
-      const result = await hostexClient.deleteWebhook(webhook_id);
-      return result;
+    async ({ webhook_id }: { webhook_id: DeleteWebhookParams[0] }) => {
+      const result: DeleteWebhookResponse = await hostexClient.deleteWebhook(
+        webhook_id,
+      );
+      return toToolResult(result);
     }
   );
 
@@ -320,9 +437,10 @@ export default function createServer({
         listing_id: z.string(),
       })),
     },
-    async (data) => {
-      const result = await hostexClient.getListingCalendar(data);
-      return result.data;
+    async (data: GetListingCalendarData) => {
+      const result: GetListingCalendarResponse =
+        await hostexClient.getListingCalendar(data);
+      return toToolResult(result.data);
     }
   );
 
@@ -338,9 +456,10 @@ export default function createServer({
         price: z.number(),
       })),
     },
-    async (data) => {
-      const result = await hostexClient.updateListingPrices(data);
-      return result;
+    async (data: UpdateListingPricesData) => {
+      const result: UpdateListingPricesResponse =
+        await hostexClient.updateListingPrices(data);
+      return toToolResult(result);
     }
   );
 
@@ -350,8 +469,9 @@ export default function createServer({
     "Get custom channels from Custom Options Page",
     {},
     async () => {
-      const result = await hostexClient.listCustomChannels();
-      return result.data;
+      const result: ListCustomChannelsResponse =
+        await hostexClient.listCustomChannels();
+      return toToolResult(result.data);
     }
   );
 
@@ -361,8 +481,8 @@ export default function createServer({
     "Get income methods from Custom Options Page",
     {},
     async () => {
-      const result = await hostexClient.listIncomeMethods();
-      return result.data;
+      const result: ListIncomeMethodsResponse = await hostexClient.listIncomeMethods();
+      return toToolResult(result.data);
     }
   );
 
