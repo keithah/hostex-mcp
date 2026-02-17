@@ -14,6 +14,8 @@ import { validate } from "./utils/validation-utils.js";
 
 export { configSchema };
 
+let hasUnhandledRejectionListener = false;
+
 export default function createServer({
   config,
 }: {
@@ -42,9 +44,12 @@ export default function createServer({
     validateSchema: validate,
   });
 
-  process.on("unhandledRejection", (reason) => {
-    logger.error({ reason: String(reason) }, "Unhandled promise rejection");
-  });
+  if (!hasUnhandledRejectionListener) {
+    process.on("unhandledRejection", (reason) => {
+      logger.error({ reason: String(reason) }, "Unhandled promise rejection");
+    });
+    hasUnhandledRejectionListener = true;
+  }
 
   return server.server;
 }
