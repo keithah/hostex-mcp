@@ -119,6 +119,10 @@ const incomeMethodSchema = z.strictObject({
 
 const emptyDataSchema = z.union([z.undefined(), z.null(), z.strictObject({})]);
 
+const updateCustomFieldsSchema = z.object({
+  custom_fields: z.union([z.record(z.string(), z.unknown()), z.null()]),
+}).catchall(z.unknown());
+
 export const toolSchemaMap = {
   hostex_list_properties: z.strictObject({
     properties: z.array(propertySchema),
@@ -140,7 +144,10 @@ export const toolSchemaMap = {
   hostex_get_custom_fields: z.strictObject({
     custom_fields: z.union([z.record(z.string(), z.unknown()), z.null()]),
   }),
-  hostex_update_custom_fields: emptyDataSchema,
+  hostex_update_custom_fields: z.union([
+    updateCustomFieldsSchema,
+    emptyDataSchema,
+  ]),
   hostex_list_availabilities: z.strictObject({
     // Hostex currently returns either `listings` or `properties` for this endpoint.
     listings: z.array(z.unknown()).optional(),
