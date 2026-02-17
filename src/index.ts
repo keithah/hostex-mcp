@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { HostexClient } from "hostex-ts";
 
+import { createHostexClientFactory } from "./client/hostex-client-factory.js";
+import { createHostexGateway } from "./client/hostex-gateway.js";
 import { validateAppConfig } from "./config/app-config.js";
 import { configSchema, type AppConfig } from "./config/config-schema.js";
 import { handleToolError } from "./handlers/tool-error-handler.js";
@@ -27,12 +28,15 @@ export default function createServer({
   });
   logger.info("Hostex MCP server initialized");
 
-  const hostexClient = new HostexClient({
+  const hostexClientFactory = createHostexClientFactory({
     accessToken: validatedConfig.accessToken,
+  });
+  const gateway = createHostexGateway({
+    clientFactory: hostexClientFactory,
   });
 
   registerAllTools(server, {
-    hostexClient,
+    gateway,
     handleToolError,
     toolErrorSchema: sanitizedToolErrorSchema,
     validateSchema: validate,

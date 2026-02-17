@@ -8,6 +8,13 @@ import type {
 import type { HostexClientFactory } from "./hostex-client-factory.js";
 import { callWithRetry } from "../resilience/retry-policy.js";
 import {
+  createHostexLimiter,
+  parseRateLimitMetadata,
+  scheduleHostex,
+  type HostexRateLimitMetadata,
+  type HostexThrottleOptions,
+} from "../resilience/throttle-policy.js";
+import {
   resolveTimeoutMs,
   withTimeout,
 } from "../resilience/timeout-policy.js";
@@ -16,13 +23,37 @@ export interface HostexGatewayOptions {
   clientFactory: HostexClientFactory;
   retryOptions?: Partial<PRetryOptions>;
   timeoutMs?: number;
+  throttleOptions?: HostexThrottleOptions;
+  onRateLimitMetadata?: (metadata: HostexRateLimitMetadata) => void;
 }
 
 export interface HostexGatewayRequestOptions {
   timeoutMs?: number;
 }
 
+function extractResponseHeaders(
+  value: unknown,
+): Headers | Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  if ("headers" in value) {
+    const headers = (value as { headers?: unknown }).headers;
+    if (
+      headers instanceof Headers ||
+      (headers && typeof headers === "object")
+    ) {
+      return headers as Headers | Record<string, unknown>;
+    }
+  }
+
+  return undefined;
+}
+
 export function createHostexGateway(options: HostexGatewayOptions): HostexApiClient {
+  const limiter = createHostexLimiter(options.throttleOptions);
+
   const execute = <T>(
     run: (client: HostexApiClient) => Promise<T>,
     request?: HostexGatewayRequestOptions,
@@ -31,10 +62,19 @@ export function createHostexGateway(options: HostexGatewayOptions): HostexApiCli
 
     return callWithRetry(
       () =>
-        withTimeout(async () => {
-          const client = options.clientFactory({ timeoutMs });
-          return run(client);
-        }, timeoutMs),
+        scheduleHostex(limiter, () =>
+          withTimeout(async () => {
+            const client = options.clientFactory({ timeoutMs });
+            const response = await run(client);
+            const headers = extractResponseHeaders(response);
+            const metadata = parseRateLimitMetadata(headers);
+            if (metadata) {
+              options.onRateLimitMetadata?.(metadata);
+            }
+
+            return response;
+          }, timeoutMs),
+        ),
       options.retryOptions,
     );
   };

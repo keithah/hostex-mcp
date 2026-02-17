@@ -1,5 +1,4 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { HostexClient } from "hostex-ts";
 import { z } from "zod";
 
 import { toToolErrorResult, toToolResult, withErrorHandling } from "../lib/error-handler.js";
@@ -12,6 +11,7 @@ import {
   stayCodeSchema,
 } from "../lib/validation.js";
 import type {
+  HostexApiClient,
   CancelReservationParams,
   CancelReservationResponse,
   CreateReservationData,
@@ -30,7 +30,7 @@ import type {
   UpdateLockCodeResponse,
 } from "../types/hostex-client.js";
 
-export function registerReservationTools(server: McpServer, hostexClient: HostexClient): void {
+export function registerReservationTools(server: McpServer, hostexClient: HostexApiClient): void {
   server.registerTool(
     "hostex_list_reservations",
     {

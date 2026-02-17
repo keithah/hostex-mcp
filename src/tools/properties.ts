@@ -1,17 +1,17 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { HostexClient } from "hostex-ts";
 
 import { toToolErrorResult, toToolResult, withErrorHandling } from "../lib/error-handler.js";
 import { validateHostexResponse } from "../lib/response-validation.js";
 import { paginationSchema, propertyIdSchema } from "../lib/validation.js";
 import type {
+  HostexApiClient,
   ListPropertiesParams,
   ListPropertiesResponse,
   ListRoomTypesParams,
   ListRoomTypesResponse,
 } from "../types/hostex-client.js";
 
-export function registerPropertyTools(server: McpServer, hostexClient: HostexClient): void {
+export function registerPropertyTools(server: McpServer, hostexClient: HostexApiClient): void {
   server.registerTool(
     "hostex_list_properties",
     {

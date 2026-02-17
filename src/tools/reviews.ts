@@ -1,18 +1,18 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { HostexClient } from "hostex-ts";
 import { z } from "zod";
 
 import { toToolErrorResult, toToolResult, withErrorHandling } from "../lib/error-handler.js";
 import { validateHostexResponse } from "../lib/response-validation.js";
 import { dateSchema, paginationSchema, propertyIdSchema, reservationCodeSchema } from "../lib/validation.js";
 import type {
+  HostexApiClient,
   CreateReviewParams,
   CreateReviewResponse,
   ListReviewsParams,
   ListReviewsResponse,
 } from "../types/hostex-client.js";
 
-export function registerReviewTools(server: McpServer, hostexClient: HostexClient): void {
+export function registerReviewTools(server: McpServer, hostexClient: HostexApiClient): void {
   server.registerTool(
     "hostex_list_reviews",
     {
