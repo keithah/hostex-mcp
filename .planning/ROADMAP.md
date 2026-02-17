@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Security Foundations & Critical Fixes** - Eliminate vulnerabilities and prevent server crashes
 - [x] **Phase 2: Type Safety & API Response Validation** - Eliminate runtime type gaps and catch API changes
-- [ ] **Phase 3: Testing Infrastructure & Initial Coverage** - Establish comprehensive testing to prevent regressions
+- [x] **Phase 3: Testing Infrastructure & Initial Coverage** - Establish comprehensive testing to prevent regressions
 - [ ] **Phase 4: Architecture, Resilience & Production Readiness** - Modular structure with production-grade reliability
 
 ## Phase Details
@@ -65,15 +65,16 @@ Plans:
   5. Concurrent client tests verify no state leakage between requests
   6. Test coverage exceeds 80% across all modules
   7. MCP Inspector compatibility validated
-**Plans:** 6 plans
+**Plans:** 7 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Establish Vitest projects, coverage gates, fixtures/factories, and shared test harnesses
-- [ ] 03-02-PLAN.md — Add deterministic unit tests for all 22 handlers with hostex-ts boundary mocks
-- [ ] 03-03-PLAN.md — Verify stdio/shttp protocol compliance, concurrency isolation, and MCP Inspector CLI compatibility
-- [ ] 03-04-PLAN.md — Add helper/schema regression tests to lock >80% coverage and sanitization guarantees
-- [ ] 03-05-PLAN.md — Execute env-gated real Hostex API E2E smoke coverage for all 22 tools
-- [ ] 03-06-PLAN.md — Close fail-closed empty-data contract gaps and restore green coverage verification
+- [x] 03-01-PLAN.md — Establish Vitest projects, coverage gates, fixtures/factories, and shared test harnesses
+- [x] 03-02-PLAN.md — Add deterministic unit tests for all 22 handlers with hostex-ts boundary mocks
+- [x] 03-03-PLAN.md — Verify stdio/shttp protocol compliance, concurrency isolation, and MCP Inspector CLI compatibility
+- [x] 03-04-PLAN.md — Add helper/schema regression tests to lock >80% coverage and sanitization guarantees
+- [x] 03-05-PLAN.md — Execute env-gated real Hostex API E2E smoke coverage for all 22 tools
+- [x] 03-06-PLAN.md — Close fail-closed empty-data contract gaps and restore green coverage verification
+- [x] 03-07-PLAN.md — Close live hostex_update_custom_fields schema mismatch and re-verify full 22-tool mutation smoke
 
 ### Phase 4: Architecture, Resilience & Production Readiness
 **Goal**: Production-ready modular server with retry logic, monitoring, and complete documentation
@@ -107,10 +108,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Security Foundations | 3/3 | Complete | 2026-02-17 |
 | 2. Type Safety | 3/3 | Complete | 2026-02-17 |
-| 3. Testing Infrastructure | 0/TBD | Not started | - |
+| 3. Testing Infrastructure | 7/7 | Complete | 2026-02-17 |
 | 4. Architecture & Resilience | 0/TBD | Not started | - |
 
 ---
 
 **Traceability:** All 46 active requirements (REQ-001 through REQ-046) mapped to phases.
-**Last updated:** 2026-02-17 during phase 1 execution verification
+**Last updated:** 2026-02-17 during phase 3 execution verification
