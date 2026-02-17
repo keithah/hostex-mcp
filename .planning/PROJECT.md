@@ -8,6 +8,20 @@ A Model Context Protocol (MCP) server that enables AI assistants (Claude Desktop
 
 Users can complete real vacation rental management workflows end-to-end through AI assistants - checking reservations, managing properties, handling guest communications - with reliable Hostex API integration.
 
+## Current State
+
+**Shipped version:** v1.0 Modernization (2026-02-17)
+
+- Production-hardened MCP server with 22 Hostex tools validated across unit, integration, and live API smoke workflows.
+- Modular architecture with composition-root registration, extracted shared modules, and resilient Hostex gateway boundaries.
+- Operational readiness in place: CI quality/security gates, health/readiness/metrics routes, and deployment/client-validation documentation.
+
+## Next Milestone Goals
+
+- Define v1.1 scope from fresh requirements (new REQUIREMENTS.md).
+- Prioritize follow-up work discovered during v1.0 verification (SDK v2 migration plan, webhook signature verification clarity, runtime caveat reduction).
+- Preserve shipped reliability baseline while adding next-value capabilities.
+
 ## Requirements
 
 ### Validated
@@ -18,22 +32,21 @@ Users can complete real vacation rental management workflows end-to-end through 
 - ✓ 22 Hostex tool handlers defined — existing
 - ✓ Basic TypeScript implementation — existing
 - ✓ Hostex API client integration via hostex-ts — existing
+- ✓ All MCP tools execute successfully against real Hostex API — v1.0
+- ✓ MCP protocol compliance with Claude Desktop, Poke, Inspector, and standard MCP clients — v1.0
+- ✓ Comprehensive error handling and sanitized error contracts across tool handlers — v1.0
+- ✓ Type safety hardening with runtime schema validation and strict TypeScript guardrails — v1.0
+- ✓ Test infrastructure with broad unit/integration/live smoke coverage and coverage threshold enforcement — v1.0
+- ✓ Modular architecture extraction, resilience controls, and production documentation — v1.0
 
 ### Active
 
 <!-- Current scope - bringing server to production quality -->
 
-- [ ] All MCP tools execute successfully against real Hostex API
-- [ ] MCP protocol compliance - works with Claude Desktop, Poke, and standard MCP clients
-- [ ] Comprehensive error handling across all tool handlers
-- [ ] Type safety throughout - eliminate `as any` coercions
-- [ ] Test coverage for all tools and workflows
-- [ ] End-to-end workflow validation with real API credentials
-- [ ] Modern code quality - proper patterns, logging, monitoring
-- [ ] hostex-ts client library updated and modernized
-- [ ] Complete documentation - setup, usage, examples
-- [ ] Security vulnerabilities in dependencies resolved
-- [ ] MCP server conforms to mcp-server-template and typescript-example patterns
+- [ ] Define and deliver next milestone requirements (v1.1 scope TBD)
+- [ ] Plan and execute MCP SDK v2 migration strategy
+- [ ] Confirm and implement webhook signature verification if supported by Hostex
+- [ ] Reduce known local runtime caveats in OpenCode stdio client path
 
 ### Out of Scope
 
@@ -45,14 +58,11 @@ Users can complete real vacation rental management workflows end-to-end through 
 ## Context
 
 **Existing codebase state:**
-- Single 370-line monolith implementation (`.smithery/shttp/index.cjs`)
-- TypeScript MCP server with 22 Hostex tool handlers
-- Zero test coverage currently
-- Type safety issues - 4 locations using `as any` coercions
-- No error handling on any tool handlers
-- Known security vulnerabilities: MCP SDK (8 versions behind), qs DoS, Lodash prototype pollution
-- Uses @modelcontextprotocol/sdk and @smithery/sdk
-- Companion library: hostex-ts at ~/src/hostex-ts
+- Shipped modularized server architecture with extracted tool domains and shared dependency wiring
+- 22 tools covered by test matrix and live Hostex API validation workflows
+- Security and type-safety hardening complete for v1 scope
+- Observability and operational endpoints available for production monitoring
+- Uses @modelcontextprotocol/sdk 1.27.0, Zod v4, Vitest, and hostex-ts 0.2.0
 
 **What works:**
 - Basic MCP server structure in place
@@ -60,11 +70,9 @@ Users can complete real vacation rental management workflows end-to-end through 
 - Tools defined for properties, reservations, guests, etc.
 
 **What needs work:**
-- Never validated against real Hostex API
-- Doesn't conform to MCP protocol standards
-- Code quality issues (no tests, poor types, no error handling)
-- Dependency security vulnerabilities
-- Not aligned with mcp-server-template / typescript-example patterns
+- Define and execute next milestone scope (new requirements baseline)
+- Evaluate and schedule MCP SDK v2 migration
+- Resolve remaining external dependency and runtime caveat follow-ups
 
 **API access:**
 - User can provide Hostex API key for validation
@@ -81,9 +89,9 @@ Users can complete real vacation rental management workflows end-to-end through 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| No backward compatibility | Nobody using current version | — Pending |
-| Proactive hostex-ts update | Modernize both server and client together | — Pending |
-| Real API validation required | Can't ship untested integration | — Pending |
+| No backward compatibility | Nobody using current version | ✓ Good |
+| Proactive hostex-ts update | Modernize both server and client together | ✓ Good |
+| Real API validation required | Can't ship untested integration | ✓ Good |
 
 ---
-*Last updated: 2026-02-16 after initialization*
+*Last updated: 2026-02-17 after v1.0 milestone completion*
