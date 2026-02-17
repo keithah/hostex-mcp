@@ -21,6 +21,7 @@ type ToolCase = {
   args?: Record<string, unknown>;
   expectedMethodArgs: unknown[];
   successResponse: unknown;
+  validationMismatchResponse?: unknown;
 };
 
 let harness: McpTestHarness | null = null;
@@ -35,6 +36,12 @@ afterEach(async () => {
 
 describe("tool handlers: availability and conversations", () => {
   const success = createSuccessScenario();
+  const nonEmptyEmptyDataMismatch = {
+    request_id: "req-bad-empty-data-shape",
+    error_code: 0,
+    error_msg: "",
+    data: { unexpected_field: true },
+  };
 
   const toolCases: ToolCase[] = [
     {
@@ -74,6 +81,7 @@ describe("tool handlers: availability and conversations", () => {
         },
       ],
       successResponse: success.emptySuccess,
+      validationMismatchResponse: nonEmptyEmptyDataMismatch,
     },
     {
       name: "list conversations",
@@ -101,6 +109,7 @@ describe("tool handlers: availability and conversations", () => {
       },
       expectedMethodArgs: ["conversation-1001", { message: "Welcome!", jpeg_base64: undefined }],
       successResponse: success.emptySuccess,
+      validationMismatchResponse: nonEmptyEmptyDataMismatch,
     },
   ];
 
@@ -120,8 +129,10 @@ describe("tool handlers: availability and conversations", () => {
 
   it.each(toolCases)(
     "fails closed with sanitized validation error for $name",
-    async ({ tool, method, args, expectedMethodArgs }) => {
-      mockHostexClient[method].mockResolvedValue(createValidationMismatchScenario());
+    async ({ tool, method, args, expectedMethodArgs, validationMismatchResponse }) => {
+      mockHostexClient[method].mockResolvedValue(
+        validationMismatchResponse ?? createValidationMismatchScenario(),
+      );
       harness = await createMcpTestServer();
 
       const result = await harness.callTool(tool, args);

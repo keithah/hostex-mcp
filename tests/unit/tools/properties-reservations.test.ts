@@ -21,6 +21,7 @@ type ToolCase = {
   args?: Record<string, unknown>;
   expectedMethodArgs: unknown[];
   successResponse: unknown;
+  validationMismatchResponse?: unknown;
 };
 
 let harness: McpTestHarness | null = null;
@@ -35,6 +36,12 @@ afterEach(async () => {
 
 describe("tool handlers: properties, reservations, custom fields", () => {
   const success = createSuccessScenario();
+  const nonEmptyEmptyDataMismatch = {
+    request_id: "req-bad-empty-data-shape",
+    error_code: 0,
+    error_msg: "",
+    data: { unexpected_field: true },
+  };
 
   const toolCases: ToolCase[] = [
     {
@@ -114,6 +121,7 @@ describe("tool handlers: properties, reservations, custom fields", () => {
       args: { reservation_code: "R-0001" },
       expectedMethodArgs: ["R-0001"],
       successResponse: success.emptySuccess,
+      validationMismatchResponse: nonEmptyEmptyDataMismatch,
     },
     {
       name: "update lock code",
@@ -122,6 +130,7 @@ describe("tool handlers: properties, reservations, custom fields", () => {
       args: { stay_code: "S-0001", lock_code: "4321" },
       expectedMethodArgs: ["S-0001", "4321"],
       successResponse: success.emptySuccess,
+      validationMismatchResponse: nonEmptyEmptyDataMismatch,
     },
     {
       name: "get custom fields",
@@ -138,6 +147,7 @@ describe("tool handlers: properties, reservations, custom fields", () => {
       args: { stay_code: "S-0001", custom_fields: { lockbox_code: "9876" } },
       expectedMethodArgs: ["S-0001", { lockbox_code: "9876" }],
       successResponse: success.emptySuccess,
+      validationMismatchResponse: nonEmptyEmptyDataMismatch,
     },
   ];
 
@@ -157,8 +167,10 @@ describe("tool handlers: properties, reservations, custom fields", () => {
 
   it.each(toolCases)(
     "fails closed with sanitized validation error for $name",
-    async ({ tool, method, args, expectedMethodArgs }) => {
-      mockHostexClient[method].mockResolvedValue(createValidationMismatchScenario());
+    async ({ tool, method, args, expectedMethodArgs, validationMismatchResponse }) => {
+      mockHostexClient[method].mockResolvedValue(
+        validationMismatchResponse ?? createValidationMismatchScenario(),
+      );
       harness = await createMcpTestServer();
 
       const result = await harness.callTool(tool, args);

@@ -21,6 +21,7 @@ type ToolCase = {
   args?: Record<string, unknown>;
   expectedMethodArgs: unknown[];
   successResponse: unknown;
+  validationMismatchResponse?: unknown;
 };
 
 let harness: McpTestHarness | null = null;
@@ -35,6 +36,12 @@ afterEach(async () => {
 
 describe("tool handlers: reviews, webhooks, listings, meta", () => {
   const success = createSuccessScenario();
+  const nonEmptyEmptyDataMismatch = {
+    request_id: "req-bad-empty-data-shape",
+    error_code: 0,
+    error_msg: "",
+    data: { unexpected_field: true },
+  };
 
   const toolCases: ToolCase[] = [
     {
@@ -72,6 +79,7 @@ describe("tool handlers: reviews, webhooks, listings, meta", () => {
         },
       ],
       successResponse: success.emptySuccess,
+      validationMismatchResponse: nonEmptyEmptyDataMismatch,
     },
     {
       name: "list webhooks",
@@ -96,6 +104,7 @@ describe("tool handlers: reviews, webhooks, listings, meta", () => {
       args: { webhook_id: 401 },
       expectedMethodArgs: [401],
       successResponse: success.emptySuccess,
+      validationMismatchResponse: nonEmptyEmptyDataMismatch,
     },
     {
       name: "get listing calendar",
@@ -132,6 +141,7 @@ describe("tool handlers: reviews, webhooks, listings, meta", () => {
         },
       ],
       successResponse: success.emptySuccess,
+      validationMismatchResponse: nonEmptyEmptyDataMismatch,
     },
     {
       name: "list custom channels",
@@ -167,8 +177,10 @@ describe("tool handlers: reviews, webhooks, listings, meta", () => {
 
   it.each(toolCases)(
     "fails closed with sanitized validation error for $name",
-    async ({ tool, method, args, expectedMethodArgs }) => {
-      mockHostexClient[method].mockResolvedValue(createValidationMismatchScenario());
+    async ({ tool, method, args, expectedMethodArgs, validationMismatchResponse }) => {
+      mockHostexClient[method].mockResolvedValue(
+        validationMismatchResponse ?? createValidationMismatchScenario(),
+      );
       harness = await createMcpTestServer();
 
       const result = await harness.callTool(tool, args);
