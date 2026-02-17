@@ -15,6 +15,13 @@ import {
 } from "./lib/error-handler.js";
 import { logger } from "./lib/logger.js";
 import { validateHostexResponse } from "./lib/response-validation.js";
+import {
+  dateSchema,
+  paginationSchema,
+  propertyIdSchema,
+  reservationCodeSchema,
+  stayCodeSchema,
+} from "./lib/validation.js";
 import type {
   CancelReservationParams,
   CancelReservationResponse,
@@ -106,9 +113,8 @@ export default function createServer({
     "hostex_list_properties",
     "List properties from your Hostex account. Returns property details including ID, title, address, channels, and location coordinates.",
     {
-      offset: z.number().optional().describe("Starting point for results (default: 0)"),
-      limit: z.number().optional().describe("Maximum results to return, max 100 (default: 20)"),
-      id: z.number().optional().describe("Filter by specific property ID"),
+      ...paginationSchema,
+      id: propertyIdSchema.optional().describe("Filter by specific property ID"),
     },
     withErrorHandling("hostex_list_properties", async (params: ListPropertiesParams = {}) => {
       const { offset, limit, id } = params;
@@ -131,8 +137,7 @@ export default function createServer({
     "hostex_list_room_types",
     "List room types from your Hostex account",
     {
-      offset: z.number().optional().describe("Starting point (default: 0)"),
-      limit: z.number().optional().describe("Max results, max 100 (default: 20)"),
+      ...paginationSchema,
     },
     withErrorHandling("hostex_list_room_types", async (params: ListRoomTypesParams = {}) => {
       const { offset, limit } = params;
@@ -154,16 +159,15 @@ export default function createServer({
     "hostex_list_reservations",
     "List and search reservations with filters like status, dates, property ID, etc.",
     {
-      reservation_code: z.string().optional(),
-      property_id: z.number().optional(),
+      reservation_code: reservationCodeSchema.optional(),
+      property_id: propertyIdSchema.optional(),
       status: z.enum(['wait_accept', 'wait_pay', 'accepted', 'cancelled', 'denied', 'timeout']).optional(),
-      start_check_in_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
-      end_check_in_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
-      start_check_out_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
-      end_check_out_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
+      start_check_in_date: dateSchema.optional().describe("Check-in start date (YYYY-MM-DD format)"),
+      end_check_in_date: dateSchema.optional().describe("Check-in end date (YYYY-MM-DD format)"),
+      start_check_out_date: dateSchema.optional().describe("Check-out start date (YYYY-MM-DD format)"),
+      end_check_out_date: dateSchema.optional().describe("Check-out end date (YYYY-MM-DD format)"),
       order_by: z.string().optional().describe("Sort field (default: booked_at)"),
-      offset: z.number().optional(),
-      limit: z.number().optional(),
+      ...paginationSchema,
     },
     withErrorHandling("hostex_list_reservations", async (params: ListReservationsParams) => {
       const result: ListReservationsResponse = await hostexClient.listReservations(
@@ -183,17 +187,17 @@ export default function createServer({
     "hostex_create_reservation",
     "Create a direct booking reservation in Hostex",
     {
-      property_id: z.string().describe("Property ID"),
-      custom_channel_id: z.number().describe("Custom channel ID"),
-      check_in_date: z.iso.date().describe("Check-in date (YYYY-MM-DD)"),
-      check_out_date: z.iso.date().describe("Check-out date (YYYY-MM-DD)"),
-      guest_name: z.string().describe("Primary guest name"),
-      currency: z.string().describe("Currency code (e.g., USD)"),
-      rate_amount: z.number().describe("Total rate amount in cents"),
-      commission_amount: z.number().describe("Commission amount in cents"),
-      received_amount: z.number().describe("Amount received in cents"),
-      income_method_id: z.number().describe("Income method ID"),
-      number_of_guests: z.number().optional(),
+      property_id: z.string().min(1).describe("Property ID"),
+      custom_channel_id: z.number().int().positive().describe("Custom channel ID"),
+      check_in_date: dateSchema.describe("Check-in date (YYYY-MM-DD)"),
+      check_out_date: dateSchema.describe("Check-out date (YYYY-MM-DD)"),
+      guest_name: z.string().min(1).max(200).describe("Primary guest name"),
+      currency: z.string().length(3).describe("Currency code (ISO 4217, e.g., USD)"),
+      rate_amount: z.number().int().min(0).describe("Total rate amount in cents"),
+      commission_amount: z.number().int().min(0).describe("Commission amount in cents"),
+      received_amount: z.number().int().min(0).describe("Amount received in cents"),
+      income_method_id: z.number().int().positive().describe("Income method ID"),
+      number_of_guests: z.number().int().min(1).optional(),
       email: z.string().optional(),
       mobile: z.string().optional(),
       remarks: z.string().optional(),
@@ -216,7 +220,7 @@ export default function createServer({
     "hostex_cancel_reservation",
     "Cancel a direct booking reservation (channel bookings not supported)",
     {
-      reservation_code: z.string().describe("Reservation code to cancel"),
+      reservation_code: reservationCodeSchema.describe("Reservation code to cancel"),
     },
     withErrorHandling("hostex_cancel_reservation", async ({ reservation_code }: { reservation_code: CancelReservationParams[0] }) => {
       const result: CancelReservationResponse = await hostexClient.cancelReservation(
@@ -236,8 +240,8 @@ export default function createServer({
     "hostex_update_lock_code",
     "Update the lock code for a stay",
     {
-      stay_code: z.string().describe("Stay code"),
-      lock_code: z.string().describe("New lock code"),
+      stay_code: stayCodeSchema.describe("Stay code"),
+      lock_code: z.string().min(1).describe("New lock code"),
     },
     withErrorHandling("hostex_update_lock_code", async ({
       stay_code,
@@ -264,7 +268,7 @@ export default function createServer({
     "hostex_get_custom_fields",
     "Get custom fields for a stay",
     {
-      stay_code: z.string().describe("Stay code"),
+      stay_code: stayCodeSchema.describe("Stay code"),
     },
     withErrorHandling("hostex_get_custom_fields", async ({ stay_code }: { stay_code: GetCustomFieldsParams[0] }) => {
       const result: GetCustomFieldsResponse = await hostexClient.getCustomFields(
@@ -284,7 +288,7 @@ export default function createServer({
     "hostex_update_custom_fields",
     "Update custom fields for a stay. Custom fields can be used in automated messages using {{cf.field_name}} syntax.",
     {
-      stay_code: z.string().describe("Stay code"),
+      stay_code: stayCodeSchema.describe("Stay code"),
       custom_fields: z.record(z.string(), z.any()).describe("Custom fields as key-value pairs"),
     },
     withErrorHandling("hostex_update_custom_fields", async ({
@@ -312,9 +316,9 @@ export default function createServer({
     "hostex_list_availabilities",
     "Query property availability for date ranges",
     {
-      property_ids: z.string().describe("Comma-separated property IDs (max 100)"),
-      start_date: z.iso.date().describe("Start date (YYYY-MM-DD)"),
-      end_date: z.iso.date().describe("End date (YYYY-MM-DD)"),
+      property_ids: z.string().min(1).describe("Comma-separated property IDs, max 100"),
+      start_date: dateSchema.describe("Start date (YYYY-MM-DD)"),
+      end_date: dateSchema.describe("End date (YYYY-MM-DD)"),
     },
     withErrorHandling("hostex_list_availabilities", async (params: ListAvailabilitiesParams) => {
       const result: ListAvailabilitiesResponse =
@@ -333,10 +337,10 @@ export default function createServer({
     "hostex_update_availabilities",
     "Update property availability status for specific dates or date ranges",
     {
-      property_ids: z.array(z.number()).describe("Array of property IDs to update"),
-      start_date: z.iso.date().optional().describe("Start date (YYYY-MM-DD)"),
-      end_date: z.iso.date().optional().describe("End date (YYYY-MM-DD)"),
-      dates: z.array(z.iso.date()).optional().describe("Specific dates array (alternative to date range)"),
+      property_ids: z.array(z.number().int().positive()).max(100).describe("Array of property IDs to update (max 100)"),
+      start_date: dateSchema.optional().describe("Start date (YYYY-MM-DD)"),
+      end_date: dateSchema.optional().describe("End date (YYYY-MM-DD)"),
+      dates: z.array(dateSchema).optional().describe("Specific dates array (alternative to date range)"),
       available: z.boolean().describe("Availability status"),
     },
     withErrorHandling("hostex_update_availabilities", async (data: UpdateAvailabilitiesData) => {
@@ -356,8 +360,7 @@ export default function createServer({
     "hostex_list_conversations",
     "List guest conversations and inquiries",
     {
-      offset: z.number().optional(),
-      limit: z.number().optional(),
+      ...paginationSchema,
     },
     withErrorHandling("hostex_list_conversations", async (params: ListConversationsParams) => {
       const result: ListConversationsResponse =
@@ -376,7 +379,7 @@ export default function createServer({
     "hostex_get_conversation",
     "Get conversation details including all messages",
     {
-      conversation_id: z.string().describe("Conversation ID"),
+      conversation_id: z.string().min(1).describe("Conversation ID"),
     },
     withErrorHandling("hostex_get_conversation", async ({
       conversation_id,
@@ -400,9 +403,9 @@ export default function createServer({
     "hostex_send_message",
     "Send a text or image message to a guest",
     {
-      conversation_id: z.string().describe("Conversation ID"),
-      message: z.string().optional().describe("Text message content"),
-      jpeg_base64: z.string().optional().describe("Base64 encoded JPEG image"),
+      conversation_id: z.string().min(1).describe("Conversation ID"),
+      message: z.string().min(1).optional().describe("Text message content; provide message or jpeg_base64"),
+      jpeg_base64: z.string().min(1).optional().describe("Base64 encoded JPEG image; provide message or jpeg_base64"),
     },
     withErrorHandling("hostex_send_message", async ({
       conversation_id,
@@ -431,13 +434,12 @@ export default function createServer({
     "hostex_list_reviews",
     "Query reviews with filters",
     {
-      reservation_code: z.string().optional(),
-      property_id: z.number().optional(),
+      reservation_code: reservationCodeSchema.optional(),
+      property_id: propertyIdSchema.optional(),
       review_status: z.string().optional(),
-      start_check_out_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
-      end_check_out_date: z.iso.date().optional().describe("YYYY-MM-DD format"),
-      offset: z.number().optional(),
-      limit: z.number().optional(),
+      start_check_out_date: dateSchema.optional().describe("Check-out start date (YYYY-MM-DD format)"),
+      end_check_out_date: dateSchema.optional().describe("Check-out end date (YYYY-MM-DD format)"),
+      ...paginationSchema,
     },
     withErrorHandling("hostex_list_reviews", async (params: ListReviewsParams) => {
       const result: ListReviewsResponse = await hostexClient.listReviews(params);
@@ -455,8 +457,8 @@ export default function createServer({
     "hostex_create_review",
     "Create a review or reply for a reservation",
     {
-      reservation_code: z.string().describe("Reservation code"),
-      host_review_score: z.number().optional().describe("Rating score (0-5)"),
+      reservation_code: reservationCodeSchema.describe("Reservation code"),
+      host_review_score: z.number().int().min(0).max(5).optional().describe("Rating score (0-5)"),
       host_review_content: z.string().optional().describe("Review comment"),
       host_reply_content: z.string().optional().describe("Reply to guest review"),
     },
@@ -500,7 +502,7 @@ export default function createServer({
     "hostex_create_webhook",
     "Create a new webhook",
     {
-      url: z.string().describe("Webhook URL endpoint"),
+      url: z.string().url().describe("Webhook URL endpoint"),
     },
     withErrorHandling("hostex_create_webhook", async ({ url }: { url: CreateWebhookParams[0] }) => {
       const result: CreateWebhookResponse = await hostexClient.createWebhook(url);
@@ -518,7 +520,7 @@ export default function createServer({
     "hostex_delete_webhook",
     "Delete a webhook (only manageable ones)",
     {
-      webhook_id: z.number().describe("Webhook ID to delete"),
+      webhook_id: z.number().int().positive().describe("Webhook ID to delete"),
     },
     withErrorHandling("hostex_delete_webhook", async ({ webhook_id }: { webhook_id: DeleteWebhookParams[0] }) => {
       const result: DeleteWebhookResponse = await hostexClient.deleteWebhook(
@@ -538,11 +540,11 @@ export default function createServer({
     "hostex_get_listing_calendar",
     "Get calendar information for multiple listings",
     {
-      start_date: z.iso.date().describe("Calendar start date (YYYY-MM-DD)"),
-      end_date: z.iso.date().describe("Calendar end date (YYYY-MM-DD)"),
+      start_date: dateSchema.describe("Calendar start date (YYYY-MM-DD)"),
+      end_date: dateSchema.describe("Calendar end date (YYYY-MM-DD)"),
       listings: z.array(z.object({
-        channel_type: z.string(),
-        listing_id: z.string(),
+        channel_type: z.string().min(1),
+        listing_id: z.string().min(1),
       })),
     },
     withErrorHandling("hostex_get_listing_calendar", async (data: GetListingCalendarData) => {
@@ -565,8 +567,8 @@ export default function createServer({
       channel_type: z.string().describe("Channel type (e.g., airbnb)"),
       listing_id: z.string().describe("Channel listing ID"),
       prices: z.array(z.object({
-        date: z.iso.date(),
-        price: z.number(),
+        date: dateSchema,
+        price: z.number().min(0),
       })),
     },
     withErrorHandling("hostex_update_listing_prices", async (data: UpdateListingPricesData) => {
