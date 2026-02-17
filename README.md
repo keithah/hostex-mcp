@@ -4,73 +4,45 @@
 [![Check hostex-ts Updates](https://github.com/keithah/hostex-mcp/actions/workflows/check-npm-updates.yml/badge.svg)](https://github.com/keithah/hostex-mcp/actions/workflows/check-npm-updates.yml)
 [![Smithery](https://smithery.ai/badge/@keithah/hostex-mcp)](https://smithery.ai/server/@keithah/hostex-mcp)
 
-Model Context Protocol server for the Hostex property management API. Manage your vacation rental properties, reservations, guest communications, and more through Claude and other MCP clients.
+Model Context Protocol server for the Hostex property-management API. It exposes 22 tools for property, reservation, availability, messaging, review, listing, and webhook workflows so MCP clients can automate vacation-rental operations.
 
-Built on [hostex-ts](https://www.npmjs.com/package/hostex-ts) - TypeScript client library for Hostex API v3.0.0.
+## What You Get
 
-## Features
+- 22 validated Hostex MCP tools with sanitized, fail-closed error behavior.
+- Dual transport support: stdio (desktop clients) and streamable HTTP (remote clients).
+- Production-focused resilience behavior (retry, throttle, timeout) in the gateway layer.
+- Operational endpoints: `healthz`, `readyz`, and `metrics`.
 
-- 🏠 **Properties** - Property and room type management
-- 📅 **Reservations** - CRUD operations, custom fields, lock codes
-- 📊 **Availability** - Property availability calendars
-- 📋 **Listings** - Channel listings, pricing, inventory
-- 💬 **Messaging** - Guest communication and messaging
-- ⭐ **Reviews** - Review management and responses
-- 🔗 **Webhooks** - Real-time event notifications
-- ⚙️ **Utilities** - Custom channels and income methods
+## Requirements
 
-### Available Tools (25+)
+- Node.js >= 18
+- npm
+- Hostex account with API access token
+- MCP-compatible client (Claude Desktop, Poke, MCP Inspector, or equivalent)
 
-- `hostex_list_properties` - List all properties
-- `hostex_list_room_types` - List room types
-- `hostex_list_reservations` - Search and filter reservations
-- `hostex_create_reservation` - Create direct bookings
-- `hostex_cancel_reservation` - Cancel reservations
-- `hostex_update_lock_code` - Update stay lock codes
-- `hostex_get_custom_fields` - Get custom field values
-- `hostex_update_custom_fields` - Update custom fields
-- `hostex_list_availabilities` - Check property availability
-- `hostex_update_availabilities` - Block/open dates
-- `hostex_list_conversations` - List guest conversations
-- `hostex_get_conversation` - Get conversation details
-- `hostex_send_message` - Send messages to guests
-- `hostex_list_reviews` - Query reviews
-- `hostex_create_review` - Leave reviews or replies
-- `hostex_list_webhooks` - List configured webhooks
-- `hostex_create_webhook` - Register new webhooks
-- `hostex_delete_webhook` - Remove webhooks
-- `hostex_get_listing_calendar` - Get listing calendars
-- `hostex_update_listing_prices` - Update channel prices
-- `hostex_list_custom_channels` - List custom channels
-- `hostex_list_income_methods` - List income methods
+## Setup
 
-## Installation
+### 1) Get a Hostex API token
 
-### Option 1: Via Smithery (Recommended)
+Create or copy your token in Hostex account/API settings, then keep it available as `HOSTEX_ACCESS_TOKEN`.
 
-Install directly from Smithery:
+### 2) Install the server
+
+Smithery install (recommended):
 
 ```bash
 npx -y @smithery/cli install @keithah/hostex-mcp --client claude
 ```
 
-Or add the hosted server URL to your MCP client:
+Hosted endpoint (for remote MCP clients):
 
-```
+```text
 https://server.smithery.ai/@keithah/hostex-mcp/mcp
 ```
 
-When prompted, provide your Hostex API access token.
+### 3) Configure an MCP client
 
-### Option 2: MCPB Package
-
-1. Download the latest `.mcpb` file from [Releases](https://github.com/keithah/hostex-mcp/releases)
-2. Double-click the file to install in your MCP client
-3. Configure your Hostex API token when prompted
-
-### Option 3: Manual Installation (Claude Desktop)
-
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `~/.config/Claude/claude_desktop_config.json` on Linux):
+Claude Desktop example (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `~/.config/Claude/claude_desktop_config.json` on Linux):
 
 ```json
 {
@@ -86,7 +58,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 }
 ```
 
-Or use the Smithery hosted server:
+Smithery-hosted variant:
 
 ```json
 {
@@ -103,112 +75,98 @@ Or use the Smithery hosted server:
 
 ## Configuration
 
-You need a Hostex API access token. Get yours from your Hostex account settings at https://www.hostex.io/
+`configSchema` currently requires one field:
 
-The server accepts configuration through the `configSchema`:
+- `accessToken` (required): Hostex API access token
 
-- `accessToken` (required): Your Hostex API access token
+Optional runtime environment:
 
-## Usage Examples
+- `LOG_LEVEL`: defaults to `info`
+- `HOSTEX_E2E_ENABLED`: set to `true` to enable real-API e2e suites
 
-Once installed, you can ask Claude natural language questions like:
+## Usage
 
-- "Show me all my Hostex properties"
-- "List reservations checking in this week"
-- "Block property 12345 for next weekend"
-- "Send a welcome message to the guest in conversation ABC123"
-- "What reviews have I received this month?"
-- "Create a direct booking for property XYZ"
+Common prompts:
 
-## Development
+- "List my Hostex properties"
+- "Show reservations checking in this week"
+- "Create a direct booking for property 123"
+- "List webhooks and flag broken endpoints"
 
-### Prerequisites
+Core tools include:
 
-- Node.js >= 18
-- npm
+- `hostex_list_properties`, `hostex_list_room_types`, `hostex_list_reservations`
+- `hostex_create_reservation`, `hostex_cancel_reservation`, `hostex_update_custom_fields`
+- `hostex_list_webhooks`, `hostex_create_webhook`, `hostex_delete_webhook`
+- `hostex_get_listing_calendar`, `hostex_update_listing_prices`
 
-### Setup
+See `docs/hostex-endpoints-and-constraints.md` for the full endpoint/constraint reference.
+
+## Development Workflow
 
 ```bash
-# Clone the repository
 git clone https://github.com/keithah/hostex-mcp.git
 cd hostex-mcp
-
-# Install dependencies
 npm install
-
-# Build for stdio transport
-npm run build:stdio
-
-# Build for streamable HTTP transport
-npm run build:shttp
-
-# Build both transports
 npm run build:all
 ```
 
-### Testing Locally
+Validation commands:
 
 ```bash
-# Start dev server with Smithery
-npm run dev
+npm run typecheck
+npm run test
+npm run test:integration -- --run
+node scripts/verify-inspector-compat.ts
 ```
 
-## Architecture
+Real Hostex API validation (requires token):
 
-This MCP server uses:
+```bash
+HOSTEX_E2E_ENABLED=true npm run test:e2e -- --run
+node scripts/verify-live-api-validation.ts
+node scripts/verify-client-matrix.ts
+```
 
-- **[@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk)** - MCP protocol implementation
-- **[@smithery/sdk](https://www.npmjs.com/package/@smithery/sdk)** - Multi-transport support
-- **[hostex-ts](https://www.npmjs.com/package/hostex-ts)** - Hostex API client library
-- **[zod](https://www.npmjs.com/package/zod)** - Schema validation
+## Operations
 
-### Transports
+Operational guidance for deployments and incidents is in `docs/production-runbook.md`.
 
-The server supports two transport protocols:
+For self-hosted HTTP deployments:
 
-- **stdio** - Standard input/output (for local MCP clients like Claude Desktop)
-- **shttp** - Streamable HTTP (for remote/web-based MCP clients)
+- `GET /healthz` - process liveness
+- `GET /readyz` - Hostex dependency readiness probe
+- `GET /metrics` - Prometheus output (HTTP deployment mode only)
 
-Both are built using [Smithery](https://smithery.ai) for seamless multi-transport support.
+## Client Compatibility and Validation
 
-## Automatic Updates
+Reproducible client matrix instructions are in `docs/client-validation.md` and cover:
 
-This repository includes a GitHub Actions workflow that:
+- Claude Desktop
+- Poke
+- Standard MCP client paths (Inspector/stdio and streamable HTTP)
 
-1. Checks hourly for new releases of `hostex-ts` on npm
-2. Automatically creates a PR to update the dependency
-3. Bumps the patch version
-4. Rebuilds the MCP bundles
+## Known Limitations
 
-When you merge the PR and create a new release tag, the MCPB package is automatically built and attached to the GitHub release.
+Documented Hostex behavior limits and mitigations are tracked in `docs/known-limitations.md`.
 
-## Requirements
+## Related Docs
 
-- Node.js >= 18
-- MCP-compatible client (Claude Desktop v0.10.0+, or any MCP client)
-- Hostex account with API access
-
-## Documentation
-
-- [Hostex API Documentation](https://docs.hostex.io/)
-- [hostex-ts npm package](https://www.npmjs.com/package/hostex-ts)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
+- `docs/production-runbook.md`
+- `docs/client-validation.md`
+- `docs/known-limitations.md`
+- `docs/hostex-endpoints-and-constraints.md`
+- Hostex API docs: https://docs.hostex.io/
 
 ## License
 
 MIT
 
-## Author
-
-Keith Hadfield
-
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/keithah/hostex-mcp/issues)
-- **Hostex API**: https://docs.hostex.io/
-- **MCP Documentation**: https://modelcontextprotocol.io/
+- GitHub issues: https://github.com/keithah/hostex-mcp/issues
+- MCP docs: https://modelcontextprotocol.io/
 
 ---
 
-**Note**: This is an unofficial community project and is not officially supported by Hostex.
+This is an unofficial community project and is not officially supported by Hostex.
