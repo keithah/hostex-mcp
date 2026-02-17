@@ -23,7 +23,7 @@ Plan: 7 of 7 in current phase
 Status: Phase 3 complete and verified
 Last activity: 2026-02-17 — Phase 3 verification passed after executing plan 03-07
 
-**Progress:** [████████░░] 80%
+**Progress:** [█████████░] 85%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Last activity: 2026-02-17 — Phase 3 verification passed after executing plan 0
 | Phase 04 P01 | 3 min | 2 tasks | 8 files |
 | Phase 04 P04 | 3 min | 3 tasks | 5 files |
 | Phase 04 P06 | 2 min | 3 tasks | 9 files |
+| Phase 04 P02 | 5 min | 3 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Enforce security blocking at high/critical severity with explicit-comment exceptions only for justified transitive upstream findings.
 - [Phase 04]: Preserved createServer default export and configSchema surface so Smithery build entry remains stable after bootstrap extraction.
 - [Phase 04]: Injected shared handler/type/validation dependencies through registerAllTools to centralize cross-cutting concerns without changing tool IDs.
+- [Phase 04]: Pinned hostex-ts to 0.2.0 and layered local method-alias typing for compile-safe gateway wiring.
+- [Phase 04]: Centralized retry/timeout/throttle behavior in createHostexGateway instead of per-tool resilience logic.
+- [Phase 04]: Switched registerAllTools dependencies to a gateway interface so tools no longer receive raw HostexClient.
 
 ### Pending Todos
 
@@ -129,8 +133,8 @@ None yet.
 
 ## Session
 
-**Last Date:** 2026-02-17T05:33:52.916Z
-**Stopped At:** Completed 04-06-PLAN.md
+**Last Date:** 2026-02-17T05:54:50.715Z
+**Stopped At:** Completed 04-02-PLAN.md
 **Resume File:** None
 
 Last session: 2026-02-16
