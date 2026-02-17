@@ -1,7 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-import { toToolErrorResult, toToolResult, withErrorHandling } from "../lib/error-handler.js";
+import { handleToolError, toToolResult, withToolErrorHandling } from "../handlers/tool-error-handler.js";
 import { validateHostexResponse } from "../lib/response-validation.js";
 import { paginationSchema } from "../lib/validation.js";
 import type {
@@ -13,8 +14,40 @@ import type {
   SendMessageParams,
   SendMessageResponse,
 } from "../types/hostex-client.js";
+import { sanitizedToolErrorSchema, type SanitizedToolError } from "../types/tool-contracts.js";
+import { validate } from "../utils/validation-utils.js";
+import type { SharedToolRegistrationDeps } from "./register-all.js";
 
-export function registerConversationTools(server: McpServer, hostexClient: HostexApiClient): void {
+function resolveSharedDeps(sharedDeps?: SharedToolRegistrationDeps): SharedToolRegistrationDeps {
+  return {
+    handleToolError: sharedDeps?.handleToolError ?? handleToolError,
+    toolErrorSchema: sharedDeps?.toolErrorSchema ?? sanitizedToolErrorSchema,
+    validateSchema: sharedDeps?.validateSchema ?? validate,
+  };
+}
+
+function toValidationErrorResult(error: unknown, sharedDeps: SharedToolRegistrationDeps): CallToolResult {
+  const sanitizedError = sharedDeps.validateSchema(sharedDeps.toolErrorSchema, error) as SanitizedToolError;
+
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(sanitizedError),
+      },
+    ],
+    structuredContent: sanitizedError,
+  };
+}
+
+export function registerConversationTools(
+  server: McpServer,
+  hostexClient: HostexApiClient,
+  sharedDeps?: SharedToolRegistrationDeps,
+): void {
+  const resolvedDeps = resolveSharedDeps(sharedDeps);
+
   server.registerTool(
     "hostex_list_conversations",
     {
@@ -24,14 +57,18 @@ export function registerConversationTools(server: McpServer, hostexClient: Hoste
         ...paginationSchema,
       },
     },
-    withErrorHandling("hostex_list_conversations", async (params: ListConversationsParams) => {
-      const result: ListConversationsResponse = await hostexClient.listConversations(params);
-      const validation = validateHostexResponse("hostex_list_conversations", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_list_conversations", validation.error);
-      }
+    withToolErrorHandling("hostex_list_conversations", async (params: ListConversationsParams) => {
+      try {
+        const result: ListConversationsResponse = await hostexClient.listConversations(params);
+        const validation = validateHostexResponse("hostex_list_conversations", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_list_conversations", error);
+      }
     }),
   );
 
@@ -44,14 +81,18 @@ export function registerConversationTools(server: McpServer, hostexClient: Hoste
         conversation_id: z.string().min(1).describe("Conversation ID"),
       },
     },
-    withErrorHandling("hostex_get_conversation", async ({ conversation_id }: { conversation_id: GetConversationParams[0] }) => {
-      const result: GetConversationResponse = await hostexClient.getConversation(conversation_id);
-      const validation = validateHostexResponse("hostex_get_conversation", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_get_conversation", validation.error);
-      }
+    withToolErrorHandling("hostex_get_conversation", async ({ conversation_id }: { conversation_id: GetConversationParams[0] }) => {
+      try {
+        const result: GetConversationResponse = await hostexClient.getConversation(conversation_id);
+        const validation = validateHostexResponse("hostex_get_conversation", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_get_conversation", error);
+      }
     }),
   );
 
@@ -66,7 +107,7 @@ export function registerConversationTools(server: McpServer, hostexClient: Hoste
         jpeg_base64: z.string().min(1).optional().describe("Base64 encoded JPEG image; provide message or jpeg_base64"),
       },
     },
-    withErrorHandling(
+    withToolErrorHandling(
       "hostex_send_message",
       async ({
         conversation_id,
@@ -77,16 +118,20 @@ export function registerConversationTools(server: McpServer, hostexClient: Hoste
         message?: SendMessageParams[1]["message"];
         jpeg_base64?: SendMessageParams[1]["jpeg_base64"];
       }) => {
-        const result: SendMessageResponse = await hostexClient.sendMessage(conversation_id, {
-          message,
-          jpeg_base64,
-        });
-        const validation = validateHostexResponse("hostex_send_message", result);
-        if (!validation.ok) {
-          return toToolErrorResult("hostex_send_message", validation.error);
-        }
+        try {
+          const result: SendMessageResponse = await hostexClient.sendMessage(conversation_id, {
+            message,
+            jpeg_base64,
+          });
+          const validation = validateHostexResponse("hostex_send_message", result);
+          if (!validation.ok) {
+            return toValidationErrorResult(validation.error, resolvedDeps);
+          }
 
-        return toToolResult(validation.data);
+          return toToolResult(validation.data);
+        } catch (error) {
+          return resolvedDeps.handleToolError("hostex_send_message", error);
+        }
       },
     ),
   );

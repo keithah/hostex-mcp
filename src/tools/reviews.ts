@@ -1,7 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-import { toToolErrorResult, toToolResult, withErrorHandling } from "../lib/error-handler.js";
+import { handleToolError, toToolResult, withToolErrorHandling } from "../handlers/tool-error-handler.js";
 import { validateHostexResponse } from "../lib/response-validation.js";
 import { dateSchema, paginationSchema, propertyIdSchema, reservationCodeSchema } from "../lib/validation.js";
 import type {
@@ -11,8 +12,40 @@ import type {
   ListReviewsParams,
   ListReviewsResponse,
 } from "../types/hostex-client.js";
+import { sanitizedToolErrorSchema, type SanitizedToolError } from "../types/tool-contracts.js";
+import { validate } from "../utils/validation-utils.js";
+import type { SharedToolRegistrationDeps } from "./register-all.js";
 
-export function registerReviewTools(server: McpServer, hostexClient: HostexApiClient): void {
+function resolveSharedDeps(sharedDeps?: SharedToolRegistrationDeps): SharedToolRegistrationDeps {
+  return {
+    handleToolError: sharedDeps?.handleToolError ?? handleToolError,
+    toolErrorSchema: sharedDeps?.toolErrorSchema ?? sanitizedToolErrorSchema,
+    validateSchema: sharedDeps?.validateSchema ?? validate,
+  };
+}
+
+function toValidationErrorResult(error: unknown, sharedDeps: SharedToolRegistrationDeps): CallToolResult {
+  const sanitizedError = sharedDeps.validateSchema(sharedDeps.toolErrorSchema, error) as SanitizedToolError;
+
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(sanitizedError),
+      },
+    ],
+    structuredContent: sanitizedError,
+  };
+}
+
+export function registerReviewTools(
+  server: McpServer,
+  hostexClient: HostexApiClient,
+  sharedDeps?: SharedToolRegistrationDeps,
+): void {
+  const resolvedDeps = resolveSharedDeps(sharedDeps);
+
   server.registerTool(
     "hostex_list_reviews",
     {
@@ -27,14 +60,18 @@ export function registerReviewTools(server: McpServer, hostexClient: HostexApiCl
         ...paginationSchema,
       },
     },
-    withErrorHandling("hostex_list_reviews", async (params: ListReviewsParams) => {
-      const result: ListReviewsResponse = await hostexClient.listReviews(params);
-      const validation = validateHostexResponse("hostex_list_reviews", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_list_reviews", validation.error);
-      }
+    withToolErrorHandling("hostex_list_reviews", async (params: ListReviewsParams) => {
+      try {
+        const result: ListReviewsResponse = await hostexClient.listReviews(params);
+        const validation = validateHostexResponse("hostex_list_reviews", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_list_reviews", error);
+      }
     }),
   );
 
@@ -50,7 +87,7 @@ export function registerReviewTools(server: McpServer, hostexClient: HostexApiCl
         host_reply_content: z.string().optional().describe("Reply to guest review"),
       },
     },
-    withErrorHandling(
+    withToolErrorHandling(
       "hostex_create_review",
       async ({
         reservation_code,
@@ -58,13 +95,17 @@ export function registerReviewTools(server: McpServer, hostexClient: HostexApiCl
       }: {
         reservation_code: CreateReviewParams[0];
       } & CreateReviewParams[1]) => {
-        const result: CreateReviewResponse = await hostexClient.createReview(reservation_code, data);
-        const validation = validateHostexResponse("hostex_create_review", result);
-        if (!validation.ok) {
-          return toToolErrorResult("hostex_create_review", validation.error);
-        }
+        try {
+          const result: CreateReviewResponse = await hostexClient.createReview(reservation_code, data);
+          const validation = validateHostexResponse("hostex_create_review", result);
+          if (!validation.ok) {
+            return toValidationErrorResult(validation.error, resolvedDeps);
+          }
 
-        return toToolResult(validation.data);
+          return toToolResult(validation.data);
+        } catch (error) {
+          return resolvedDeps.handleToolError("hostex_create_review", error);
+        }
       },
     ),
   );

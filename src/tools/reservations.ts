@@ -1,7 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-import { toToolErrorResult, toToolResult, withErrorHandling } from "../lib/error-handler.js";
+import { handleToolError, toToolResult, withToolErrorHandling } from "../handlers/tool-error-handler.js";
 import { validateHostexResponse } from "../lib/response-validation.js";
 import {
   dateSchema,
@@ -29,8 +30,40 @@ import type {
   UpdateLockCodeParams,
   UpdateLockCodeResponse,
 } from "../types/hostex-client.js";
+import { sanitizedToolErrorSchema, type SanitizedToolError } from "../types/tool-contracts.js";
+import { validate } from "../utils/validation-utils.js";
+import type { SharedToolRegistrationDeps } from "./register-all.js";
 
-export function registerReservationTools(server: McpServer, hostexClient: HostexApiClient): void {
+function resolveSharedDeps(sharedDeps?: SharedToolRegistrationDeps): SharedToolRegistrationDeps {
+  return {
+    handleToolError: sharedDeps?.handleToolError ?? handleToolError,
+    toolErrorSchema: sharedDeps?.toolErrorSchema ?? sanitizedToolErrorSchema,
+    validateSchema: sharedDeps?.validateSchema ?? validate,
+  };
+}
+
+function toValidationErrorResult(error: unknown, sharedDeps: SharedToolRegistrationDeps): CallToolResult {
+  const sanitizedError = sharedDeps.validateSchema(sharedDeps.toolErrorSchema, error) as SanitizedToolError;
+
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(sanitizedError),
+      },
+    ],
+    structuredContent: sanitizedError,
+  };
+}
+
+export function registerReservationTools(
+  server: McpServer,
+  hostexClient: HostexApiClient,
+  sharedDeps?: SharedToolRegistrationDeps,
+): void {
+  const resolvedDeps = resolveSharedDeps(sharedDeps);
+
   server.registerTool(
     "hostex_list_reservations",
     {
@@ -50,14 +83,18 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         ...paginationSchema,
       },
     },
-    withErrorHandling("hostex_list_reservations", async (params: ListReservationsParams) => {
-      const result: ListReservationsResponse = await hostexClient.listReservations(params);
-      const validation = validateHostexResponse("hostex_list_reservations", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_list_reservations", validation.error);
-      }
+    withToolErrorHandling("hostex_list_reservations", async (params: ListReservationsParams) => {
+      try {
+        const result: ListReservationsResponse = await hostexClient.listReservations(params);
+        const validation = validateHostexResponse("hostex_list_reservations", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_list_reservations", error);
+      }
     }),
   );
 
@@ -83,14 +120,18 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         remarks: z.string().optional(),
       },
     },
-    withErrorHandling("hostex_create_reservation", async (data: CreateReservationData) => {
-      const result: CreateReservationResponse = await hostexClient.createReservation(data);
-      const validation = validateHostexResponse("hostex_create_reservation", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_create_reservation", validation.error);
-      }
+    withToolErrorHandling("hostex_create_reservation", async (data: CreateReservationData) => {
+      try {
+        const result: CreateReservationResponse = await hostexClient.createReservation(data);
+        const validation = validateHostexResponse("hostex_create_reservation", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_create_reservation", error);
+      }
     }),
   );
 
@@ -103,16 +144,20 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         reservation_code: reservationCodeSchema.describe("Reservation code to cancel"),
       },
     },
-    withErrorHandling(
+    withToolErrorHandling(
       "hostex_cancel_reservation",
       async ({ reservation_code }: { reservation_code: CancelReservationParams[0] }) => {
-        const result: CancelReservationResponse = await hostexClient.cancelReservation(reservation_code);
-        const validation = validateHostexResponse("hostex_cancel_reservation", result);
-        if (!validation.ok) {
-          return toToolErrorResult("hostex_cancel_reservation", validation.error);
-        }
+        try {
+          const result: CancelReservationResponse = await hostexClient.cancelReservation(reservation_code);
+          const validation = validateHostexResponse("hostex_cancel_reservation", result);
+          if (!validation.ok) {
+            return toValidationErrorResult(validation.error, resolvedDeps);
+          }
 
-        return toToolResult(validation.data);
+          return toToolResult(validation.data);
+        } catch (error) {
+          return resolvedDeps.handleToolError("hostex_cancel_reservation", error);
+        }
       },
     ),
   );
@@ -127,7 +172,7 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         lock_code: z.string().min(1).describe("New lock code"),
       },
     },
-    withErrorHandling(
+    withToolErrorHandling(
       "hostex_update_lock_code",
       async ({
         stay_code,
@@ -136,13 +181,17 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         stay_code: UpdateLockCodeParams[0];
         lock_code: UpdateLockCodeParams[1];
       }) => {
-        const result: UpdateLockCodeResponse = await hostexClient.updateLockCode(stay_code, lock_code);
-        const validation = validateHostexResponse("hostex_update_lock_code", result);
-        if (!validation.ok) {
-          return toToolErrorResult("hostex_update_lock_code", validation.error);
-        }
+        try {
+          const result: UpdateLockCodeResponse = await hostexClient.updateLockCode(stay_code, lock_code);
+          const validation = validateHostexResponse("hostex_update_lock_code", result);
+          if (!validation.ok) {
+            return toValidationErrorResult(validation.error, resolvedDeps);
+          }
 
-        return toToolResult(validation.data);
+          return toToolResult(validation.data);
+        } catch (error) {
+          return resolvedDeps.handleToolError("hostex_update_lock_code", error);
+        }
       },
     ),
   );
@@ -156,14 +205,18 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         stay_code: stayCodeSchema.describe("Stay code"),
       },
     },
-    withErrorHandling("hostex_get_custom_fields", async ({ stay_code }: { stay_code: GetCustomFieldsParams[0] }) => {
-      const result: GetCustomFieldsResponse = await hostexClient.getCustomFields(stay_code);
-      const validation = validateHostexResponse("hostex_get_custom_fields", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_get_custom_fields", validation.error);
-      }
+    withToolErrorHandling("hostex_get_custom_fields", async ({ stay_code }: { stay_code: GetCustomFieldsParams[0] }) => {
+      try {
+        const result: GetCustomFieldsResponse = await hostexClient.getCustomFields(stay_code);
+        const validation = validateHostexResponse("hostex_get_custom_fields", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_get_custom_fields", error);
+      }
     }),
   );
 
@@ -177,7 +230,7 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         custom_fields: z.record(z.string(), z.any()).describe("Custom fields as key-value pairs"),
       },
     },
-    withErrorHandling(
+    withToolErrorHandling(
       "hostex_update_custom_fields",
       async ({
         stay_code,
@@ -186,16 +239,20 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         stay_code: UpdateCustomFieldsParams[0];
         custom_fields: UpdateCustomFieldsParams[1];
       }) => {
-        const result: UpdateCustomFieldsResponse = await hostexClient.updateCustomFields(
-          stay_code,
-          custom_fields,
-        );
-        const validation = validateHostexResponse("hostex_update_custom_fields", result);
-        if (!validation.ok) {
-          return toToolErrorResult("hostex_update_custom_fields", validation.error);
-        }
+        try {
+          const result: UpdateCustomFieldsResponse = await hostexClient.updateCustomFields(
+            stay_code,
+            custom_fields,
+          );
+          const validation = validateHostexResponse("hostex_update_custom_fields", result);
+          if (!validation.ok) {
+            return toValidationErrorResult(validation.error, resolvedDeps);
+          }
 
-        return toToolResult(validation.data);
+          return toToolResult(validation.data);
+        } catch (error) {
+          return resolvedDeps.handleToolError("hostex_update_custom_fields", error);
+        }
       },
     ),
   );
@@ -211,14 +268,18 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         end_date: dateSchema.describe("End date (YYYY-MM-DD)"),
       },
     },
-    withErrorHandling("hostex_list_availabilities", async (params: ListAvailabilitiesParams) => {
-      const result: ListAvailabilitiesResponse = await hostexClient.listAvailabilities(params);
-      const validation = validateHostexResponse("hostex_list_availabilities", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_list_availabilities", validation.error);
-      }
+    withToolErrorHandling("hostex_list_availabilities", async (params: ListAvailabilitiesParams) => {
+      try {
+        const result: ListAvailabilitiesResponse = await hostexClient.listAvailabilities(params);
+        const validation = validateHostexResponse("hostex_list_availabilities", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_list_availabilities", error);
+      }
     }),
   );
 
@@ -235,14 +296,18 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
         available: z.boolean().describe("Availability status"),
       },
     },
-    withErrorHandling("hostex_update_availabilities", async (data: UpdateAvailabilitiesData) => {
-      const result: UpdateAvailabilitiesResponse = await hostexClient.updateAvailabilities(data);
-      const validation = validateHostexResponse("hostex_update_availabilities", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_update_availabilities", validation.error);
-      }
+    withToolErrorHandling("hostex_update_availabilities", async (data: UpdateAvailabilitiesData) => {
+      try {
+        const result: UpdateAvailabilitiesResponse = await hostexClient.updateAvailabilities(data);
+        const validation = validateHostexResponse("hostex_update_availabilities", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_update_availabilities", error);
+      }
     }),
   );
 }

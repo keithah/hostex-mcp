@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
-import { toToolErrorResult, toToolResult, withErrorHandling } from "../lib/error-handler.js";
+import { handleToolError, toToolResult, withToolErrorHandling } from "../handlers/tool-error-handler.js";
 import { validateHostexResponse } from "../lib/response-validation.js";
 import { paginationSchema, propertyIdSchema } from "../lib/validation.js";
 import type {
@@ -10,8 +11,46 @@ import type {
   ListRoomTypesParams,
   ListRoomTypesResponse,
 } from "../types/hostex-client.js";
+import { sanitizedToolErrorSchema, type SanitizedToolError } from "../types/tool-contracts.js";
+import { validate } from "../utils/validation-utils.js";
+import type { SharedToolRegistrationDeps } from "./register-all.js";
 
-export function registerPropertyTools(server: McpServer, hostexClient: HostexApiClient): void {
+function resolveSharedDeps(sharedDeps?: SharedToolRegistrationDeps): SharedToolRegistrationDeps {
+  return {
+    handleToolError: sharedDeps?.handleToolError ?? handleToolError,
+    toolErrorSchema: sharedDeps?.toolErrorSchema ?? sanitizedToolErrorSchema,
+    validateSchema: sharedDeps?.validateSchema ?? validate,
+  };
+}
+
+function toValidationErrorResult(
+  error: unknown,
+  sharedDeps: SharedToolRegistrationDeps,
+): CallToolResult {
+  const sanitizedError = sharedDeps.validateSchema(
+    sharedDeps.toolErrorSchema,
+    error,
+  ) as SanitizedToolError;
+
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(sanitizedError),
+      },
+    ],
+    structuredContent: sanitizedError,
+  };
+}
+
+export function registerPropertyTools(
+  server: McpServer,
+  hostexClient: HostexApiClient,
+  sharedDeps?: SharedToolRegistrationDeps,
+): void {
+  const resolvedDeps = resolveSharedDeps(sharedDeps);
+
   server.registerTool(
     "hostex_list_properties",
     {
@@ -22,20 +61,24 @@ export function registerPropertyTools(server: McpServer, hostexClient: HostexApi
         id: propertyIdSchema.optional().describe("Filter by specific property ID"),
       },
     },
-    withErrorHandling("hostex_list_properties", async (params: ListPropertiesParams = {}) => {
-      const { offset, limit, id } = params;
-      const result: ListPropertiesResponse = await hostexClient.listProperties({
-        offset,
-        limit,
-        id,
-      });
+    withToolErrorHandling("hostex_list_properties", async (params: ListPropertiesParams = {}) => {
+      try {
+        const { offset, limit, id } = params;
+        const result: ListPropertiesResponse = await hostexClient.listProperties({
+          offset,
+          limit,
+          id,
+        });
 
-      const validation = validateHostexResponse("hostex_list_properties", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_list_properties", validation.error);
+        const validation = validateHostexResponse("hostex_list_properties", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
+
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_list_properties", error);
       }
-
-      return toToolResult(validation.data);
     }),
   );
 
@@ -48,19 +91,23 @@ export function registerPropertyTools(server: McpServer, hostexClient: HostexApi
         ...paginationSchema,
       },
     },
-    withErrorHandling("hostex_list_room_types", async (params: ListRoomTypesParams = {}) => {
-      const { offset, limit } = params;
-      const result: ListRoomTypesResponse = await hostexClient.listRoomTypes({
-        offset,
-        limit,
-      });
+    withToolErrorHandling("hostex_list_room_types", async (params: ListRoomTypesParams = {}) => {
+      try {
+        const { offset, limit } = params;
+        const result: ListRoomTypesResponse = await hostexClient.listRoomTypes({
+          offset,
+          limit,
+        });
 
-      const validation = validateHostexResponse("hostex_list_room_types", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_list_room_types", validation.error);
+        const validation = validateHostexResponse("hostex_list_room_types", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
+
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_list_room_types", error);
       }
-
-      return toToolResult(validation.data);
     }),
   );
 }
