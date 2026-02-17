@@ -12,7 +12,8 @@ export function registerMetaTools(server: McpServer, hostexClient: HostexApiClie
   server.registerTool(
     "hostex_list_custom_channels",
     {
-      description: "Get custom channels from Custom Options Page",
+      description:
+        "List custom channel definitions configured in Hostex custom options. Use to discover valid custom_channel_id values before creating direct reservations; returns validated channel metadata.",
       inputSchema: {},
     },
     withErrorHandling("hostex_list_custom_channels", async (_params: Record<string, never>) => {
@@ -29,7 +30,8 @@ export function registerMetaTools(server: McpServer, hostexClient: HostexApiClie
   server.registerTool(
     "hostex_list_income_methods",
     {
-      description: "Get income methods from Custom Options Page",
+      description:
+        "List income/payment methods configured in Hostex custom options. Use to discover valid income_method_id values required by reservation creation flows; returns validated method metadata.",
       inputSchema: {},
     },
     withErrorHandling("hostex_list_income_methods", async (_params: Record<string, never>) => {

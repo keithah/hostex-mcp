@@ -16,7 +16,7 @@ export function registerPropertyTools(server: McpServer, hostexClient: HostexApi
     "hostex_list_properties",
     {
       description:
-        "List properties from your Hostex account. Returns property details including ID, title, address, channels, and location coordinates.",
+        "Use when you need Hostex property records for planning or lookup workflows. Optional pagination (offset/limit) and optional id filter are supported; returns validated property list data (or a single matching property) in the Hostex response envelope.",
       inputSchema: {
         ...paginationSchema,
         id: propertyIdSchema.optional().describe("Filter by specific property ID"),
@@ -42,7 +42,8 @@ export function registerPropertyTools(server: McpServer, hostexClient: HostexApi
   server.registerTool(
     "hostex_list_room_types",
     {
-      description: "List room types from your Hostex account",
+      description:
+        "Use when a workflow needs Hostex room-type catalog metadata. Supports optional pagination (offset/limit) and returns validated room-type entries in the standard Hostex response envelope.",
       inputSchema: {
         ...paginationSchema,
       },

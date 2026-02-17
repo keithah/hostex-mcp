@@ -35,7 +35,7 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
     "hostex_list_reservations",
     {
       description:
-        "List and search reservations with filters like status, dates, property ID, etc.",
+        "Use to search reservation records by reservation_code, property_id, status, check-in/check-out windows, and pagination. Returns validated reservation list data; for broad date ranges, send narrow filters to reduce payload size.",
       inputSchema: {
         reservation_code: reservationCodeSchema.optional(),
         property_id: propertyIdSchema.optional(),
@@ -64,7 +64,8 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
   server.registerTool(
     "hostex_create_reservation",
     {
-      description: "Create a direct booking reservation in Hostex",
+      description:
+        "Create a direct (custom-channel) reservation when all required booking and payment fields are available. Requires property_id, custom_channel_id, stay dates, currency, amount fields in cents, and income_method_id; returns validated creation result from Hostex.",
       inputSchema: {
         property_id: z.string().min(1).describe("Property ID"),
         custom_channel_id: z.number().int().positive().describe("Custom channel ID"),
@@ -96,7 +97,8 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
   server.registerTool(
     "hostex_cancel_reservation",
     {
-      description: "Cancel a direct booking reservation (channel bookings not supported)",
+      description:
+        "Cancel a reservation by reservation_code for direct/custom-channel bookings only. Do not use for OTA/channel-managed bookings that Hostex does not allow this endpoint to cancel; returns validated success/error payload.",
       inputSchema: {
         reservation_code: reservationCodeSchema.describe("Reservation code to cancel"),
       },
@@ -118,7 +120,8 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
   server.registerTool(
     "hostex_update_lock_code",
     {
-      description: "Update the lock code for a stay",
+      description:
+        "Update smart-lock access code for a specific stay_code. Requires non-empty lock_code string and returns validated Hostex acknowledgement payload.",
       inputSchema: {
         stay_code: stayCodeSchema.describe("Stay code"),
         lock_code: z.string().min(1).describe("New lock code"),
@@ -147,7 +150,8 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
   server.registerTool(
     "hostex_get_custom_fields",
     {
-      description: "Get custom fields for a stay",
+      description:
+        "Fetch custom field key/value data for one stay_code. Use before message templating or workflow branching that depends on stay metadata; returns validated custom-fields payload.",
       inputSchema: {
         stay_code: stayCodeSchema.describe("Stay code"),
       },
@@ -167,7 +171,7 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
     "hostex_update_custom_fields",
     {
       description:
-        "Update custom fields for a stay. Custom fields can be used in automated messages using {{cf.field_name}} syntax.",
+        "Set or clear stay custom fields for one stay_code using a key/value object. Values may be heterogeneous JSON-compatible data; updated fields can be referenced in Hostex message templates (for example {{cf.field_name}}). Returns validated update response.",
       inputSchema: {
         stay_code: stayCodeSchema.describe("Stay code"),
         custom_fields: z.record(z.string(), z.any()).describe("Custom fields as key-value pairs"),
@@ -199,7 +203,8 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
   server.registerTool(
     "hostex_list_availabilities",
     {
-      description: "Query property availability for date ranges",
+      description:
+        "Read availability blocks for one or more properties over a date range. property_ids must be a comma-separated string and date bounds are required; returns validated day-level availability data from Hostex.",
       inputSchema: {
         property_ids: z.string().min(1).describe("Comma-separated property IDs, max 100"),
         start_date: dateSchema.describe("Start date (YYYY-MM-DD)"),
@@ -220,7 +225,8 @@ export function registerReservationTools(server: McpServer, hostexClient: Hostex
   server.registerTool(
     "hostex_update_availabilities",
     {
-      description: "Update property availability status for specific dates or date ranges",
+      description:
+        "Open or block inventory for up to 100 properties in a single call. Provide either a start_date/end_date range or explicit dates array plus available boolean; returns validated Hostex acknowledgement payload.",
       inputSchema: {
         property_ids: z.array(z.number().int().positive()).max(100).describe("Array of property IDs to update (max 100)"),
         start_date: dateSchema.optional().describe("Start date (YYYY-MM-DD)"),

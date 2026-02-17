@@ -16,7 +16,8 @@ export function registerListingTools(server: McpServer, hostexClient: HostexApiC
   server.registerTool(
     "hostex_get_listing_calendar",
     {
-      description: "Get calendar information for multiple listings",
+      description:
+        "Fetch calendar availability/pricing context for channel listings across a required date window. Provide one or more listing objects (channel_type + listing_id) and receive validated listing-calendar payload data.",
       inputSchema: {
         start_date: dateSchema.describe("Calendar start date (YYYY-MM-DD)"),
         end_date: dateSchema.describe("Calendar end date (YYYY-MM-DD)"),
@@ -42,7 +43,8 @@ export function registerListingTools(server: McpServer, hostexClient: HostexApiC
   server.registerTool(
     "hostex_update_listing_prices",
     {
-      description: "Update listing prices for channel listings",
+      description:
+        "Push nightly price updates for a specific channel listing. Requires channel_type, listing_id, and a non-empty prices array (date + non-negative price); returns validated Hostex acknowledgement payload.",
       inputSchema: {
         channel_type: z.string().describe("Channel type (e.g., airbnb)"),
         listing_id: z.string().describe("Channel listing ID"),

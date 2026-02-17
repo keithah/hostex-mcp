@@ -16,7 +16,8 @@ export function registerWebhookTools(server: McpServer, hostexClient: HostexApiC
   server.registerTool(
     "hostex_list_webhooks",
     {
-      description: "List configured webhooks",
+      description:
+        "List currently configured Hostex webhook subscriptions for operational auditing. Returns validated webhook records; signature-verification behavior is not exposed by this MCP server and must be handled by your receiving endpoint.",
       inputSchema: {},
     },
     withErrorHandling("hostex_list_webhooks", async (_params: Record<string, never>) => {
@@ -33,7 +34,8 @@ export function registerWebhookTools(server: McpServer, hostexClient: HostexApiC
   server.registerTool(
     "hostex_create_webhook",
     {
-      description: "Create a new webhook",
+      description:
+        "Register a webhook callback URL with Hostex. Requires a valid HTTPS URL and returns validated webhook creation data; downstream endpoint availability and security controls are your responsibility.",
       inputSchema: {
         url: z.string().url().describe("Webhook URL endpoint"),
       },
@@ -52,7 +54,8 @@ export function registerWebhookTools(server: McpServer, hostexClient: HostexApiC
   server.registerTool(
     "hostex_delete_webhook",
     {
-      description: "Delete a webhook (only manageable ones)",
+      description:
+        "Delete a Hostex-managed webhook by numeric webhook_id. Only deletable/manageable webhook entries can be removed by this endpoint; returns validated success/error payload from Hostex.",
       inputSchema: {
         webhook_id: z.number().int().positive().describe("Webhook ID to delete"),
       },

@@ -16,7 +16,8 @@ export function registerReviewTools(server: McpServer, hostexClient: HostexApiCl
   server.registerTool(
     "hostex_list_reviews",
     {
-      description: "Query reviews with filters",
+      description:
+        "Query host and guest review records with optional reservation/property/date/status filters plus pagination. Use for reputation monitoring workflows and return validated review-list payloads.",
       inputSchema: {
         reservation_code: reservationCodeSchema.optional(),
         property_id: propertyIdSchema.optional(),
@@ -40,7 +41,8 @@ export function registerReviewTools(server: McpServer, hostexClient: HostexApiCl
   server.registerTool(
     "hostex_create_review",
     {
-      description: "Create a review or reply for a reservation",
+      description:
+        "Create or update host review content for a reservation_code, including score, review text, or host reply text. Provide only fields you intend to publish and expect a validated Hostex acknowledgement response.",
       inputSchema: {
         reservation_code: reservationCodeSchema.describe("Reservation code"),
         host_review_score: z.number().int().min(0).max(5).optional().describe("Rating score (0-5)"),

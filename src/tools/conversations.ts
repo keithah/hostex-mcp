@@ -18,7 +18,8 @@ export function registerConversationTools(server: McpServer, hostexClient: Hoste
   server.registerTool(
     "hostex_list_conversations",
     {
-      description: "List guest conversations and inquiries",
+      description:
+        "List guest message threads and inquiries for inbox triage workflows. Supports pagination (offset/limit) and returns validated conversation summary records.",
       inputSchema: {
         ...paginationSchema,
       },
@@ -37,7 +38,8 @@ export function registerConversationTools(server: McpServer, hostexClient: Hoste
   server.registerTool(
     "hostex_get_conversation",
     {
-      description: "Get conversation details including all messages",
+      description:
+        "Load one full conversation by conversation_id, including message history and participants as provided by Hostex. Use after listing conversations when detailed context is needed before replying.",
       inputSchema: {
         conversation_id: z.string().min(1).describe("Conversation ID"),
       },
@@ -56,7 +58,8 @@ export function registerConversationTools(server: McpServer, hostexClient: Hoste
   server.registerTool(
     "hostex_send_message",
     {
-      description: "Send a text or image message to a guest",
+      description:
+        "Send a guest message to an existing conversation_id. Provide either message text, jpeg_base64 image data, or both; returns validated Hostex send result and should be used only with known active conversation IDs.",
       inputSchema: {
         conversation_id: z.string().min(1).describe("Conversation ID"),
         message: z.string().min(1).optional().describe("Text message content; provide message or jpeg_base64"),
