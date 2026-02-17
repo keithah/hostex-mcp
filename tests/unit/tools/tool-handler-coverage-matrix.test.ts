@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createSuccessScenario } from "../../fixtures/hostex-scenarios.js";
@@ -22,6 +25,17 @@ type CoverageCase = {
 };
 
 let harness: McpTestHarness | null = null;
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+
+const domainToolSources = [
+  "src/tools/properties.ts",
+  "src/tools/reservations.ts",
+  "src/tools/conversations.ts",
+  "src/tools/reviews.ts",
+  "src/tools/webhooks.ts",
+  "src/tools/listings.ts",
+  "src/tools/meta.ts",
+];
 
 afterEach(async () => {
   resetHostexClientMock();
@@ -199,5 +213,21 @@ describe("tool handler coverage matrix", () => {
       expect(result.isError).not.toBe(true);
       expect(mockHostexClient[coverage.method]).toHaveBeenCalled();
     }
+  });
+
+  it("blocks legacy error-handler imports in all domain registrars", async () => {
+    for (const relativePath of domainToolSources) {
+      const source = await readFile(path.join(projectRoot, relativePath), "utf8");
+      expect(source).not.toContain("../lib/error-handler.js");
+      expect(source).toContain("../handlers/tool-error-handler.js");
+    }
+  });
+
+  it("keeps register-all shared dependency wiring active", async () => {
+    const source = await readFile(path.join(projectRoot, "src/tools/register-all.ts"), "utf8");
+
+    expect(source).not.toMatch(/void\s+(toHandledToolError|toolErrorSchema|validateSchema)/);
+    expect(source).toMatch(/registerPropertyTools\(server,\s*deps\.gateway,\s*sharedDeps\)/);
+    expect(source).toMatch(/registerMetaTools\(server,\s*deps\.gateway,\s*sharedDeps\)/);
   });
 });

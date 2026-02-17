@@ -1,7 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-import { toToolErrorResult, toToolResult, withErrorHandling } from "../lib/error-handler.js";
+import { handleToolError, toToolResult, withToolErrorHandling } from "../handlers/tool-error-handler.js";
 import { validateHostexResponse } from "../lib/response-validation.js";
 import { dateSchema } from "../lib/validation.js";
 import type {
@@ -11,8 +12,40 @@ import type {
   UpdateListingPricesData,
   UpdateListingPricesResponse,
 } from "../types/hostex-client.js";
+import { sanitizedToolErrorSchema, type SanitizedToolError } from "../types/tool-contracts.js";
+import { validate } from "../utils/validation-utils.js";
+import type { SharedToolRegistrationDeps } from "./register-all.js";
 
-export function registerListingTools(server: McpServer, hostexClient: HostexApiClient): void {
+function resolveSharedDeps(sharedDeps?: SharedToolRegistrationDeps): SharedToolRegistrationDeps {
+  return {
+    handleToolError: sharedDeps?.handleToolError ?? handleToolError,
+    toolErrorSchema: sharedDeps?.toolErrorSchema ?? sanitizedToolErrorSchema,
+    validateSchema: sharedDeps?.validateSchema ?? validate,
+  };
+}
+
+function toValidationErrorResult(error: unknown, sharedDeps: SharedToolRegistrationDeps): CallToolResult {
+  const sanitizedError = sharedDeps.validateSchema(sharedDeps.toolErrorSchema, error) as SanitizedToolError;
+
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(sanitizedError),
+      },
+    ],
+    structuredContent: sanitizedError,
+  };
+}
+
+export function registerListingTools(
+  server: McpServer,
+  hostexClient: HostexApiClient,
+  sharedDeps?: SharedToolRegistrationDeps,
+): void {
+  const resolvedDeps = resolveSharedDeps(sharedDeps);
+
   server.registerTool(
     "hostex_get_listing_calendar",
     {
@@ -29,14 +62,18 @@ export function registerListingTools(server: McpServer, hostexClient: HostexApiC
         ),
       },
     },
-    withErrorHandling("hostex_get_listing_calendar", async (data: GetListingCalendarData) => {
-      const result: GetListingCalendarResponse = await hostexClient.getListingCalendar(data);
-      const validation = validateHostexResponse("hostex_get_listing_calendar", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_get_listing_calendar", validation.error);
-      }
+    withToolErrorHandling("hostex_get_listing_calendar", async (data: GetListingCalendarData) => {
+      try {
+        const result: GetListingCalendarResponse = await hostexClient.getListingCalendar(data);
+        const validation = validateHostexResponse("hostex_get_listing_calendar", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_get_listing_calendar", error);
+      }
     }),
   );
 
@@ -56,14 +93,18 @@ export function registerListingTools(server: McpServer, hostexClient: HostexApiC
         ),
       },
     },
-    withErrorHandling("hostex_update_listing_prices", async (data: UpdateListingPricesData) => {
-      const result: UpdateListingPricesResponse = await hostexClient.updateListingPrices(data);
-      const validation = validateHostexResponse("hostex_update_listing_prices", result);
-      if (!validation.ok) {
-        return toToolErrorResult("hostex_update_listing_prices", validation.error);
-      }
+    withToolErrorHandling("hostex_update_listing_prices", async (data: UpdateListingPricesData) => {
+      try {
+        const result: UpdateListingPricesResponse = await hostexClient.updateListingPrices(data);
+        const validation = validateHostexResponse("hostex_update_listing_prices", result);
+        if (!validation.ok) {
+          return toValidationErrorResult(validation.error, resolvedDeps);
+        }
 
-      return toToolResult(validation.data);
+        return toToolResult(validation.data);
+      } catch (error) {
+        return resolvedDeps.handleToolError("hostex_update_listing_prices", error);
+      }
     }),
   );
 }

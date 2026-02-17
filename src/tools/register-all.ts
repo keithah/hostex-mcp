@@ -37,11 +37,11 @@ export function registerAllTools(server: McpServer, deps: RegisterAllToolsDeps):
     validateSchema: deps.validateSchema ?? validate,
   };
 
-  (registerPropertyTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
-  (registerReservationTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
-  (registerConversationTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
-  (registerReviewTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
-  (registerWebhookTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
-  (registerListingTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
-  (registerMetaTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
+  registerPropertyTools(server, deps.gateway, sharedDeps);
+  registerReservationTools(server, deps.gateway, sharedDeps);
+  registerConversationTools(server, deps.gateway, sharedDeps);
+  registerReviewTools(server, deps.gateway, sharedDeps);
+  registerWebhookTools(server, deps.gateway, sharedDeps);
+  registerListingTools(server, deps.gateway, sharedDeps);
+  registerMetaTools(server, deps.gateway, sharedDeps);
 }
