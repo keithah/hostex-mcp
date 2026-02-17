@@ -23,7 +23,7 @@ Plan: 7 of 7 in current phase
 Status: Phase 3 complete and verified
 Last activity: 2026-02-17 — Phase 3 verification passed after executing plan 03-07
 
-**Progress:** [██████████] 95%
+**Progress:** [██████████] 100%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Last activity: 2026-02-17 — Phase 3 verification passed after executing plan 0
 | Phase 04 P02 | 5 min | 3 tasks | 20 files |
 | Phase 04 P07 | 1 min | 2 tasks | 8 files |
 | Phase 04 P03 | 4 min | 3 tasks | 10 files |
+| Phase 04 P05 | 0 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Track rate-limit fidelity as explicit headers-vs-fallback mode metrics so operators can detect degraded metadata paths.
 - [Phase 04]: Expose /healthz and /readyz with distinct liveness vs dependency-readiness semantics, including degraded 503 states.
 - [Phase 04]: Gate /metrics route by deployment mode and return deterministic unavailable payload when not in http mode.
+- [Phase 04]: Treat OpenCode local stdio runtime mismatch as a known client caveat until runtime import path is fixed.
+- [Phase 04]: Keep release-gating client evidence on Claude Desktop, Poke, and Inspector while OpenCode mismatch follow-up remains open.
 
 ### Pending Todos
 
@@ -140,8 +143,8 @@ None yet.
 
 ## Session
 
-**Last Date:** 2026-02-17T06:51:23.861Z
-**Stopped At:** Completed 04-03-PLAN.md
+**Last Date:** 2026-02-17T07:13:01.733Z
+**Stopped At:** Completed 04-05-PLAN.md
 **Resume File:** None
 
 Last session: 2026-02-16
