@@ -8,6 +8,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { HostexClient } from 'hostex-ts';
+import { toSanitizedToolError } from "./lib/error-sanitize.js";
 import { validateHostexResponse } from "./lib/response-validation.js";
 import type {
   CancelReservationParams,
@@ -72,16 +73,17 @@ export default function createServer({
     ],
   });
 
-  const validateToolData = <TTool extends Parameters<typeof validateHostexResponse>[0]>(
-    tool: TTool,
-    response: unknown,
-  ) => {
-    const validation = validateHostexResponse(tool, response);
-    if (!validation.ok) {
-      throw validation.error;
-    }
-
-    return validation.data;
+  const toToolErrorResult = (tool: string, error: unknown) => {
+    const sanitizedError = toSanitizedToolError(tool, error);
+    return {
+      isError: true,
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(sanitizedError),
+        },
+      ],
+    };
   };
 
   // Create MCP server
@@ -112,8 +114,12 @@ export default function createServer({
         limit,
         id,
       });
-      const data = validateToolData("hostex_list_properties", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_properties", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_properties", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -131,8 +137,12 @@ export default function createServer({
         offset,
         limit,
       });
-      const data = validateToolData("hostex_list_room_types", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_room_types", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_room_types", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -156,8 +166,12 @@ export default function createServer({
       const result: ListReservationsResponse = await hostexClient.listReservations(
         params,
       );
-      const data = validateToolData("hostex_list_reservations", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_reservations", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_reservations", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -185,8 +199,12 @@ export default function createServer({
       const result: CreateReservationResponse = await hostexClient.createReservation(
         data,
       );
-      const validatedData = validateToolData("hostex_create_reservation", result);
-      return toToolResult(validatedData);
+      const validation = validateHostexResponse("hostex_create_reservation", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_create_reservation", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -201,8 +219,12 @@ export default function createServer({
       const result: CancelReservationResponse = await hostexClient.cancelReservation(
         reservation_code,
       );
-      const data = validateToolData("hostex_cancel_reservation", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_cancel_reservation", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_cancel_reservation", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -225,8 +247,12 @@ export default function createServer({
         stay_code,
         lock_code,
       );
-      const data = validateToolData("hostex_update_lock_code", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_update_lock_code", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_update_lock_code", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -241,8 +267,12 @@ export default function createServer({
       const result: GetCustomFieldsResponse = await hostexClient.getCustomFields(
         stay_code,
       );
-      const data = validateToolData("hostex_get_custom_fields", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_get_custom_fields", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_get_custom_fields", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -265,8 +295,12 @@ export default function createServer({
         stay_code,
         custom_fields,
       );
-      const data = validateToolData("hostex_update_custom_fields", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_update_custom_fields", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_update_custom_fields", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -282,8 +316,12 @@ export default function createServer({
     async (params: ListAvailabilitiesParams) => {
       const result: ListAvailabilitiesResponse =
         await hostexClient.listAvailabilities(params);
-      const data = validateToolData("hostex_list_availabilities", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_availabilities", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_availabilities", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -301,8 +339,12 @@ export default function createServer({
     async (data: UpdateAvailabilitiesData) => {
       const result: UpdateAvailabilitiesResponse =
         await hostexClient.updateAvailabilities(data);
-      const validatedData = validateToolData("hostex_update_availabilities", result);
-      return toToolResult(validatedData);
+      const validation = validateHostexResponse("hostex_update_availabilities", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_update_availabilities", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -317,8 +359,12 @@ export default function createServer({
     async (params: ListConversationsParams) => {
       const result: ListConversationsResponse =
         await hostexClient.listConversations(params);
-      const data = validateToolData("hostex_list_conversations", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_conversations", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_conversations", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -337,8 +383,12 @@ export default function createServer({
       const result: GetConversationResponse = await hostexClient.getConversation(
         conversation_id,
       );
-      const data = validateToolData("hostex_get_conversation", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_get_conversation", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_get_conversation", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -364,8 +414,12 @@ export default function createServer({
         conversation_id,
         { message, jpeg_base64 },
       );
-      const data = validateToolData("hostex_send_message", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_send_message", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_send_message", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -384,8 +438,12 @@ export default function createServer({
     },
     async (params: ListReviewsParams) => {
       const result: ListReviewsResponse = await hostexClient.listReviews(params);
-      const data = validateToolData("hostex_list_reviews", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_reviews", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_reviews", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -409,8 +467,12 @@ export default function createServer({
         reservation_code,
         data,
       );
-      const validatedData = validateToolData("hostex_create_review", result);
-      return toToolResult(validatedData);
+      const validation = validateHostexResponse("hostex_create_review", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_create_review", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -421,8 +483,12 @@ export default function createServer({
     {},
     async () => {
       const result: ListWebhooksResponse = await hostexClient.listWebhooks();
-      const data = validateToolData("hostex_list_webhooks", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_webhooks", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_webhooks", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -435,8 +501,12 @@ export default function createServer({
     },
     async ({ url }: { url: CreateWebhookParams[0] }) => {
       const result: CreateWebhookResponse = await hostexClient.createWebhook(url);
-      const data = validateToolData("hostex_create_webhook", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_create_webhook", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_create_webhook", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -451,8 +521,12 @@ export default function createServer({
       const result: DeleteWebhookResponse = await hostexClient.deleteWebhook(
         webhook_id,
       );
-      const data = validateToolData("hostex_delete_webhook", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_delete_webhook", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_delete_webhook", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -471,8 +545,12 @@ export default function createServer({
     async (data: GetListingCalendarData) => {
       const result: GetListingCalendarResponse =
         await hostexClient.getListingCalendar(data);
-      const validatedData = validateToolData("hostex_get_listing_calendar", result);
-      return toToolResult(validatedData);
+      const validation = validateHostexResponse("hostex_get_listing_calendar", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_get_listing_calendar", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -491,8 +569,12 @@ export default function createServer({
     async (data: UpdateListingPricesData) => {
       const result: UpdateListingPricesResponse =
         await hostexClient.updateListingPrices(data);
-      const validatedData = validateToolData("hostex_update_listing_prices", result);
-      return toToolResult(validatedData);
+      const validation = validateHostexResponse("hostex_update_listing_prices", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_update_listing_prices", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -504,8 +586,12 @@ export default function createServer({
     async () => {
       const result: ListCustomChannelsResponse =
         await hostexClient.listCustomChannels();
-      const data = validateToolData("hostex_list_custom_channels", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_custom_channels", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_custom_channels", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
@@ -516,8 +602,12 @@ export default function createServer({
     {},
     async () => {
       const result: ListIncomeMethodsResponse = await hostexClient.listIncomeMethods();
-      const data = validateToolData("hostex_list_income_methods", result);
-      return toToolResult(data);
+      const validation = validateHostexResponse("hostex_list_income_methods", result);
+      if (!validation.ok) {
+        return toToolErrorResult("hostex_list_income_methods", validation.error);
+      }
+
+      return toToolResult(validation.data);
     }
   );
 
