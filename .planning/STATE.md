@@ -12,10 +12,10 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 **Current Phase:** 1
 **Current Phase Name:** Security Foundations & Critical Fixes
 **Total Phases:** 4
-**Current Plan:** 1
+**Current Plan:** 2
 **Total Plans in Phase:** 3
 **Status:** Ready to execute
-**Last Activity:** 2026-02-16
+**Last Activity:** 2026-02-17
 **Last Activity Description:** Roadmap created with 4-phase structure
 
 Phase: 1 of 4 (Security Foundations & Critical Fixes)
@@ -40,6 +40,7 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 | Phase 01 P01 | 2min | 2 tasks | 4 files |
+| Phase 02 P01 | 1 min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -55,6 +56,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Upgraded to @modelcontextprotocol/sdk 1.27.0 early to eliminate known HIGH SDK vulnerabilities before feature work
 - [Phase 01]: Kept transitive lodash vulnerability unresolved locally because remediation depends on @smithery/cli upstream updates
 - [Phase 01]: Temporarily set noImplicitAny=false to keep verification passing after SDK typing contract changes
+- [Phase 02]: Use a tool-name keyed schema map so every Hostex MCP tool has explicit response validation coverage.
+- [Phase 02]: Keep strict schemas for stable fields and allow z.unknown only at known hostex-ts broad-field boundaries.
+- [Phase 02]: Standardize on non-throwing validateHostexResponse plus allowlisted sanitized error DTOs for handler integration.
 
 ### Pending Todos
 
@@ -77,8 +81,8 @@ None yet.
 
 ## Session
 
-**Last Date:** 2026-02-16T23:21:10.202Z
-**Stopped At:** Completed 01-01-PLAN.md
+**Last Date:** 2026-02-17T00:00:54.938Z
+**Stopped At:** Completed 02-01-PLAN.md
 **Resume File:** None
 
 Last session: 2026-02-16
