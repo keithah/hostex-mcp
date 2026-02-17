@@ -50,6 +50,7 @@ Last activity: 2026-02-17 — Completed phase 3 plan 01 execution
 | Phase 01 P02 | 0 min | 2 tasks | 5 files |
 | Phase 01 P03 | 1 min | 2 tasks | 2 files |
 | Phase 03 P06 | 2 min | 3 tasks | 7 files |
+| Phase 03 P07 | 3 min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Enforce empty-data responses as undefined, null, or strict empty object so mismatch payloads always fail closed.
 - [Phase 03]: Use explicit non-empty mismatch fixtures for mutation handlers to keep fail-closed assertions deterministic.
 - [Phase 03]: Treat transport error text parsing as best-effort in protocol tests while still requiring valid error or structured payload evidence.
+- [Phase 03]: Model hostex_update_custom_fields with explicit set/clear response variants (custom_fields object or empty-array clear) to match live Hostex behavior while keeping fail-closed validation.
+- [Phase 03]: Run live e2e verification by exporting .env credentials in-command so env-gated smoke suites execute instead of skipping.
 
 ### Pending Todos
 
@@ -116,8 +119,8 @@ None yet.
 
 ## Session
 
-**Last Date:** 2026-02-17T03:09:12.518Z
-**Stopped At:** Completed 03-06-PLAN.md
+**Last Date:** 2026-02-17T04:03:16.286Z
+**Stopped At:** Completed 03-07-PLAN.md
 **Resume File:** None
 
 Last session: 2026-02-16
