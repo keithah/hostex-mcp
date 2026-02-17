@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 **Current Phase:** 3
 **Current Phase Name:** Testing Infrastructure & Initial Coverage
 **Total Phases:** 4
-**Current Plan:** 4
+**Current Plan:** 5
 **Total Plans in Phase:** 5
 **Status:** Ready to execute
 **Last Activity:** 2026-02-17
@@ -23,7 +23,7 @@ Plan: 1 of 5 in current phase
 Status: In progress
 Last activity: 2026-02-17 — Completed phase 3 plan 01 execution
 
-**Progress:** [███████░░░] 73%
+**Progress:** [████████░░] 82%
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Last activity: 2026-02-17 — Completed phase 3 plan 01 execution
 | Phase 03 P04 | 3 min | 2 tasks | 5 files |
 | Phase 03 P02 | 4 min | 3 tasks | 7 files |
 | Phase 03 P03 | 2 min | 2 tasks | 4 files |
+| Phase 03 P05 | 5 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Use official MCP SDK StdioClientTransport and StreamableHTTPClientTransport for protocol integration tests against built Smithery artifacts.
 - [Phase 03]: Provide streamable HTTP config via /mcp query params (accessToken=...) so Smithery shttp initialization validates deterministically in tests.
 - [Phase 03]: Accept either successful structured payloads or sanitized error DTOs when asserting transport tool-call behavior to keep integration checks deterministic.
+- [Phase 03]: Treat webhook quota-limit responses as explicit safe skips in mutation smoke accounting
+- [Phase 03]: Relax Hostex response schemas only at observed live-variance boundaries to keep real-API smoke suites stable
 
 ### Pending Todos
 
@@ -103,8 +106,8 @@ None yet.
 
 ## Session
 
-**Last Date:** 2026-02-17T01:34:53.451Z
-**Stopped At:** Completed 03-03-PLAN.md
+**Last Date:** 2026-02-17T02:11:45.374Z
+**Stopped At:** Completed 03-05-PLAN.md
 **Resume File:** None
 
 Last session: 2026-02-16
