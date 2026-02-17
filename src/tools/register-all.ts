@@ -24,20 +24,24 @@ export interface RegisterAllToolsDeps {
   ) => z.infer<TSchema>;
 }
 
+export interface SharedToolRegistrationDeps {
+  handleToolError: (tool: string, error: unknown) => CallToolResult;
+  toolErrorSchema: z.ZodTypeAny;
+  validateSchema: <TSchema extends z.ZodTypeAny>(schema: TSchema, value: unknown) => z.infer<TSchema>;
+}
+
 export function registerAllTools(server: McpServer, deps: RegisterAllToolsDeps): void {
-  const toHandledToolError = deps.handleToolError ?? handleToolError;
-  const toolErrorSchema = deps.toolErrorSchema ?? sanitizedToolErrorSchema;
-  const validateSchema = deps.validateSchema ?? validate;
+  const sharedDeps: SharedToolRegistrationDeps = {
+    handleToolError: deps.handleToolError ?? handleToolError,
+    toolErrorSchema: deps.toolErrorSchema ?? sanitizedToolErrorSchema,
+    validateSchema: deps.validateSchema ?? validate,
+  };
 
-  void toHandledToolError;
-  void toolErrorSchema;
-  void validateSchema;
-
-  registerPropertyTools(server, deps.gateway);
-  registerReservationTools(server, deps.gateway);
-  registerConversationTools(server, deps.gateway);
-  registerReviewTools(server, deps.gateway);
-  registerWebhookTools(server, deps.gateway);
-  registerListingTools(server, deps.gateway);
-  registerMetaTools(server, deps.gateway);
+  (registerPropertyTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
+  (registerReservationTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
+  (registerConversationTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
+  (registerReviewTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
+  (registerWebhookTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
+  (registerListingTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
+  (registerMetaTools as (...args: unknown[]) => void)(server, deps.gateway, sharedDeps);
 }
