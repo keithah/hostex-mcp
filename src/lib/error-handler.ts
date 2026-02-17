@@ -3,6 +3,10 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { toSanitizedToolError } from "./error-sanitize.js";
 
 function toStructuredContent(value: unknown): Record<string, unknown> {
+  if (value === undefined) {
+    return {};
+  }
+
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     return value as Record<string, unknown>;
   }
@@ -11,11 +15,13 @@ function toStructuredContent(value: unknown): Record<string, unknown> {
 }
 
 export function toToolResult(data: unknown): CallToolResult {
+  const contentText = JSON.stringify(data === undefined ? null : data);
+
   return {
     content: [
       {
         type: "text",
-        text: JSON.stringify(data),
+        text: contentText,
       },
     ],
     structuredContent: toStructuredContent(data),

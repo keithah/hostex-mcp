@@ -15,14 +15,15 @@ export type SanitizedToolError = {
 function sanitizeMessage(input: unknown): string {
   const base = input instanceof Error ? input.message : String(input);
   return base
-    .replace(/authorization\s*[:=]\s*[^\s,;]+/gi, "authorization=[REDACTED]")
+    .replace(/bearer\s+[A-Za-z0-9._-]+/gi, "Bearer [REDACTED]")
+    .replace(/authorization\s*[:=]\s*[^\n,;]+/gi, "authorization=[REDACTED]")
     .replace(/\bauthorization\b/gi, "[REDACTED]")
     .replace(/hostex-access-token\s*[:=]\s*[^\s,;]+/gi, "hostex-access-token=[REDACTED]")
     .replace(/\bhostex-access-token\b/gi, "[REDACTED]")
     .replace(/cookie\s*[:=]\s*[^\n]+/gi, "cookie=[REDACTED]")
     .replace(/\bcookie\b/gi, "[REDACTED]")
-    .replace(/bearer\s+[A-Za-z0-9._-]+/gi, "Bearer [REDACTED]")
     .replace(/\braw_payload\b/gi, "[REDACTED]")
+    .replace(/\b(token|access_token|api_key)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]")
     .replace(/[?&](token|access_token|api_key)=[^&\s]+/gi, "?$1=[REDACTED]")
     .split("\n")[0]
     .slice(0, 240);
