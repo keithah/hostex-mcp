@@ -2,6 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
 import createServer from "../../src/index.js";
+import type { AppConfig } from "../../src/config/config-schema.js";
 import type { HostexToolId } from "./tool-ids.js";
 
 type ToolArguments = Record<string, unknown> | undefined;
@@ -18,10 +19,12 @@ export type McpTestHarness = {
 export async function createMcpTestServer(options?: {
   accessToken?: string;
 }): Promise<McpTestHarness> {
+  const config: AppConfig = {
+    accessToken: options?.accessToken ?? "test-access-token",
+  };
+
   const server = createServer({
-    config: {
-      accessToken: options?.accessToken ?? "test-access-token",
-    },
+    config,
   });
 
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

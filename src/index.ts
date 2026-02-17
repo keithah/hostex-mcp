@@ -5,8 +5,11 @@ import { HostexClient } from "hostex-ts";
 
 import { validateAppConfig } from "./config/app-config.js";
 import { configSchema, type AppConfig } from "./config/config-schema.js";
+import { handleToolError } from "./handlers/tool-error-handler.js";
 import { logger } from "./lib/logger.js";
+import { sanitizedToolErrorSchema } from "./types/tool-contracts.js";
 import { registerAllTools } from "./tools/register-all.js";
+import { validate } from "./utils/validation-utils.js";
 
 export { configSchema };
 
@@ -28,7 +31,12 @@ export default function createServer({
     accessToken: validatedConfig.accessToken,
   });
 
-  registerAllTools(server, { hostexClient });
+  registerAllTools(server, {
+    hostexClient,
+    handleToolError,
+    toolErrorSchema: sanitizedToolErrorSchema,
+    validateSchema: validate,
+  });
 
   process.on("unhandledRejection", (reason) => {
     logger.error({ reason: String(reason) }, "Unhandled promise rejection");
