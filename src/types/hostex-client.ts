@@ -16,6 +16,8 @@ export type HostexMethodResponse<TMethod extends HostexMethodName> = Awaited<
   ReturnType<HostexClient[TMethod]>
 >;
 
+export type HostexApiClient = Pick<HostexClient, HostexMethodName>;
+
 export type ListPropertiesParams = HostexMethodParams<"listProperties">[0];
 export type ListPropertiesResponse = HostexMethodResponse<"listProperties">;
 
