@@ -222,7 +222,7 @@ async function callSuccessfulTool(
   args?: Record<string, unknown>,
 ) {
   const result = await harness.callTool(toolId, args);
-  expect(result.isError).not.toBe(true);
+  expect(result.isError, `${toolId} returned error payload: ${JSON.stringify(result.structuredContent)}`).not.toBe(true);
 
   const payload = result.structuredContent;
   expect(payload).toBeDefined();
