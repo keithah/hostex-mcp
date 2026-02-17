@@ -8,6 +8,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { HostexClient } from 'hostex-ts';
+import { validateHostexResponse } from "./lib/response-validation.js";
 import type {
   CancelReservationParams,
   CancelReservationResponse,
@@ -71,6 +72,18 @@ export default function createServer({
     ],
   });
 
+  const validateToolData = <TTool extends Parameters<typeof validateHostexResponse>[0]>(
+    tool: TTool,
+    response: unknown,
+  ) => {
+    const validation = validateHostexResponse(tool, response);
+    if (!validation.ok) {
+      throw validation.error;
+    }
+
+    return validation.data;
+  };
+
   // Create MCP server
   const server = new McpServer({
     name: "hostex-mcp",
@@ -99,7 +112,8 @@ export default function createServer({
         limit,
         id,
       });
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_properties", result);
+      return toToolResult(data);
     }
   );
 
@@ -117,7 +131,8 @@ export default function createServer({
         offset,
         limit,
       });
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_room_types", result);
+      return toToolResult(data);
     }
   );
 
@@ -141,7 +156,8 @@ export default function createServer({
       const result: ListReservationsResponse = await hostexClient.listReservations(
         params,
       );
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_reservations", result);
+      return toToolResult(data);
     }
   );
 
@@ -169,7 +185,8 @@ export default function createServer({
       const result: CreateReservationResponse = await hostexClient.createReservation(
         data,
       );
-      return toToolResult(result.data);
+      const validatedData = validateToolData("hostex_create_reservation", result);
+      return toToolResult(validatedData);
     }
   );
 
@@ -184,7 +201,8 @@ export default function createServer({
       const result: CancelReservationResponse = await hostexClient.cancelReservation(
         reservation_code,
       );
-      return toToolResult(result);
+      const data = validateToolData("hostex_cancel_reservation", result);
+      return toToolResult(data);
     }
   );
 
@@ -207,7 +225,8 @@ export default function createServer({
         stay_code,
         lock_code,
       );
-      return toToolResult(result);
+      const data = validateToolData("hostex_update_lock_code", result);
+      return toToolResult(data);
     }
   );
 
@@ -222,7 +241,8 @@ export default function createServer({
       const result: GetCustomFieldsResponse = await hostexClient.getCustomFields(
         stay_code,
       );
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_get_custom_fields", result);
+      return toToolResult(data);
     }
   );
 
@@ -245,7 +265,8 @@ export default function createServer({
         stay_code,
         custom_fields,
       );
-      return toToolResult(result);
+      const data = validateToolData("hostex_update_custom_fields", result);
+      return toToolResult(data);
     }
   );
 
@@ -261,7 +282,8 @@ export default function createServer({
     async (params: ListAvailabilitiesParams) => {
       const result: ListAvailabilitiesResponse =
         await hostexClient.listAvailabilities(params);
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_availabilities", result);
+      return toToolResult(data);
     }
   );
 
@@ -279,7 +301,8 @@ export default function createServer({
     async (data: UpdateAvailabilitiesData) => {
       const result: UpdateAvailabilitiesResponse =
         await hostexClient.updateAvailabilities(data);
-      return toToolResult(result);
+      const validatedData = validateToolData("hostex_update_availabilities", result);
+      return toToolResult(validatedData);
     }
   );
 
@@ -294,7 +317,8 @@ export default function createServer({
     async (params: ListConversationsParams) => {
       const result: ListConversationsResponse =
         await hostexClient.listConversations(params);
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_conversations", result);
+      return toToolResult(data);
     }
   );
 
@@ -313,7 +337,8 @@ export default function createServer({
       const result: GetConversationResponse = await hostexClient.getConversation(
         conversation_id,
       );
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_get_conversation", result);
+      return toToolResult(data);
     }
   );
 
@@ -339,7 +364,8 @@ export default function createServer({
         conversation_id,
         { message, jpeg_base64 },
       );
-      return toToolResult(result);
+      const data = validateToolData("hostex_send_message", result);
+      return toToolResult(data);
     }
   );
 
@@ -358,7 +384,8 @@ export default function createServer({
     },
     async (params: ListReviewsParams) => {
       const result: ListReviewsResponse = await hostexClient.listReviews(params);
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_reviews", result);
+      return toToolResult(data);
     }
   );
 
@@ -382,7 +409,8 @@ export default function createServer({
         reservation_code,
         data,
       );
-      return toToolResult(result);
+      const validatedData = validateToolData("hostex_create_review", result);
+      return toToolResult(validatedData);
     }
   );
 
@@ -393,7 +421,8 @@ export default function createServer({
     {},
     async () => {
       const result: ListWebhooksResponse = await hostexClient.listWebhooks();
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_webhooks", result);
+      return toToolResult(data);
     }
   );
 
@@ -406,7 +435,8 @@ export default function createServer({
     },
     async ({ url }: { url: CreateWebhookParams[0] }) => {
       const result: CreateWebhookResponse = await hostexClient.createWebhook(url);
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_create_webhook", result);
+      return toToolResult(data);
     }
   );
 
@@ -421,7 +451,8 @@ export default function createServer({
       const result: DeleteWebhookResponse = await hostexClient.deleteWebhook(
         webhook_id,
       );
-      return toToolResult(result);
+      const data = validateToolData("hostex_delete_webhook", result);
+      return toToolResult(data);
     }
   );
 
@@ -440,7 +471,8 @@ export default function createServer({
     async (data: GetListingCalendarData) => {
       const result: GetListingCalendarResponse =
         await hostexClient.getListingCalendar(data);
-      return toToolResult(result.data);
+      const validatedData = validateToolData("hostex_get_listing_calendar", result);
+      return toToolResult(validatedData);
     }
   );
 
@@ -459,7 +491,8 @@ export default function createServer({
     async (data: UpdateListingPricesData) => {
       const result: UpdateListingPricesResponse =
         await hostexClient.updateListingPrices(data);
-      return toToolResult(result);
+      const validatedData = validateToolData("hostex_update_listing_prices", result);
+      return toToolResult(validatedData);
     }
   );
 
@@ -471,7 +504,8 @@ export default function createServer({
     async () => {
       const result: ListCustomChannelsResponse =
         await hostexClient.listCustomChannels();
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_custom_channels", result);
+      return toToolResult(data);
     }
   );
 
@@ -482,7 +516,8 @@ export default function createServer({
     {},
     async () => {
       const result: ListIncomeMethodsResponse = await hostexClient.listIncomeMethods();
-      return toToolResult(result.data);
+      const data = validateToolData("hostex_list_income_methods", result);
+      return toToolResult(data);
     }
   );
 
