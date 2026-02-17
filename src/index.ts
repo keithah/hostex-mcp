@@ -13,6 +13,7 @@ import {
   toToolResult,
   withErrorHandling,
 } from "./lib/error-handler.js";
+import { logger } from "./lib/logger.js";
 import { validateHostexResponse } from "./lib/response-validation.js";
 import type {
   CancelReservationParams,
@@ -74,6 +75,7 @@ export default function createServer({
     title: "Hostex Property Management",
     version: "0.2.0"
   });
+  logger.info("Hostex MCP server initialized");
 
   // Initialize Hostex client with provided API token
   const hostexClient = new HostexClient({
@@ -592,6 +594,10 @@ export default function createServer({
       return toToolResult(validation.data);
     })
   );
+
+  process.on("unhandledRejection", (reason) => {
+    logger.error({ reason: String(reason) }, "Unhandled promise rejection");
+  });
 
   // Return the server object (Smithery CLI handles transport)
   return server.server;
