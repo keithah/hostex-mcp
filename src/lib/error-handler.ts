@@ -89,9 +89,6 @@ export function withErrorHandling<TArgs>(
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      const errorMessage = error instanceof Error
-        ? `Failed to execute ${tool}: ${error.message}. Please check your parameters and try again.`
-        : `Failed to execute ${tool}: unknown error. Please check your parameters and try again.`;
 
       logger.error(
         {
@@ -104,15 +101,7 @@ export function withErrorHandling<TArgs>(
         "Tool failed",
       );
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: errorMessage,
-          },
-        ],
-        isError: true,
-      };
+      return toToolErrorResult(tool, error);
     }
   };
 }

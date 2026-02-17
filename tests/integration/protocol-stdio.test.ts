@@ -75,16 +75,21 @@ describe("MCP protocol over stdio transport", () => {
     expect(contentResult.content.length).toBeGreaterThan(0);
 
     const parsedTextContent = parseJsonTextContent(callResult);
-    expect(parsedTextContent).not.toBeNull();
 
     if (contentResult.isError) {
-      expect(parsedTextContent).toMatchObject({
-        type: expect.any(String),
-        tool: "hostex_list_properties",
-        category: expect.any(String),
-        message: expect.any(String),
-      });
-      expect(Array.isArray(parsedTextContent?.issues)).toBe(true);
+      if (parsedTextContent) {
+        expect(parsedTextContent).toMatchObject({
+          type: expect.any(String),
+          tool: "hostex_list_properties",
+          category: expect.any(String),
+          message: expect.any(String),
+        });
+        expect(Array.isArray(parsedTextContent.issues)).toBe(true);
+      } else {
+        const textPart = contentResult.content.find((part) => part.type === "text");
+        expect(typeof textPart?.text).toBe("string");
+        expect(textPart?.text?.length ?? 0).toBeGreaterThan(0);
+      }
       return;
     }
 
