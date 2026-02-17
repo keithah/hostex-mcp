@@ -54,3 +54,16 @@ Operational guidance:
 - Run `HOSTEX_E2E_ENABLED=true npm run test:e2e -- --run` before release.
 - Run `node scripts/verify-live-api-validation.ts` and `node scripts/verify-client-matrix.ts` as release readiness checks.
 - Track skipped e2e mutation paths (risky write operations) as explicit known test coverage gaps.
+
+## 5) OpenCode Local MCP Client Runtime Mismatch (Observed)
+
+Observed behavior:
+
+- OpenCode local stdio client path can list tools but fail on sample Hostex tool calls.
+- Reproduced payload: `{"type":"runtime_error","tool":"hostex_list_properties","category":"runtime","message":"(0 , kf.default) is not a function","issues":[]}`.
+
+Operational guidance:
+
+- Treat this as a known client-path caveat, not confirmed Hostex API behavior regression.
+- Use Claude Desktop, Poke, and Inspector validation paths as release-gating client evidence until resolved.
+- Follow up with code-level investigation of `.smithery/stdio/index.cjs` import/runtime behavior under OpenCode execution.

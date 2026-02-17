@@ -145,6 +145,7 @@ Reproducible client matrix instructions are in `docs/client-validation.md` and c
 - Claude Desktop
 - Poke
 - Standard MCP client paths (Inspector/stdio and streamable HTTP)
+- OpenCode local stdio path caveat (tracked in `docs/known-limitations.md`)
 
 ## Known Limitations
 

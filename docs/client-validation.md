@@ -24,6 +24,7 @@ node scripts/verify-live-api-validation.ts
 | --- | --- | --- | --- |
 | Claude Desktop | stdio | Human + command-backed | `tools/list` includes Hostex tools and one successful tool call |
 | Poke | stdio or shttp | Human + command-backed | `tools/list` includes Hostex tools and one successful tool call |
+| OpenCode (local MCP client path) | stdio | Human + command-backed (known caveat) | `tools/list` may pass while sample tool call can fail with runtime client mismatch |
 | MCP Inspector CLI | stdio | Fully automated | `node scripts/verify-inspector-compat.ts` passes |
 | Streamable HTTP client | shttp | Command-backed | HTTP handshake succeeds and one Hostex tool call returns non-error payload |
 
@@ -53,6 +54,20 @@ Pass criteria:
 - At least one tool call succeeds against the configured token.
 
 ## Standard MCP Client Paths
+
+### OpenCode local stdio path (known caveat)
+
+Observed mismatch from human verification:
+
+- Local server command: `node /home/keith/src/hostex-mcp/.smithery/stdio/index.cjs accessToken=test-access-token`
+- Tool call: `hostex_list_properties` with `{offset:0, limit:1}`
+- Result: `{"type":"runtime_error","tool":"hostex_list_properties","category":"runtime","message":"(0 , kf.default) is not a function","issues":[]}`
+
+Current guidance:
+
+- Treat this OpenCode stdio result as a known client caveat for now.
+- Use Claude Desktop, Poke, and Inspector results as release-gating evidence until this runtime mismatch is resolved.
+- Track follow-up investigation for the `.smithery/stdio/index.cjs` runtime import path causing `kf.default` failures.
 
 ### Inspector CLI (stdio)
 
