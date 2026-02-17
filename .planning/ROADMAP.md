@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Security Foundations & Critical Fixes** - Eliminate vulnerabilities and prevent server crashes
 - [x] **Phase 2: Type Safety & API Response Validation** - Eliminate runtime type gaps and catch API changes
 - [x] **Phase 3: Testing Infrastructure & Initial Coverage** - Establish comprehensive testing to prevent regressions
-- [ ] **Phase 4: Architecture, Resilience & Production Readiness** - Modular structure with production-grade reliability
+- [x] **Phase 4: Architecture, Resilience & Production Readiness** - Modular structure with production-grade reliability
 
 ## Phase Details
 
@@ -94,14 +94,16 @@ Plans:
   11. All 22 tools validated end-to-end with real Hostex API credentials
   12. MCP server works with Claude Desktop, Poke, and standard MCP clients
   13. Known Hostex API limitations documented (webhook timeouts, sync issues)
-**Plans**: 5 plans
+**Plans**: 7 plans
 
 Plans:
 - [ ] 04-01-PLAN.md — Extract modular architecture with domain tool modules and composition-root registration
-- [ ] 04-02-PLAN.md — Implement HostexGateway resilience boundary with retry/throttle/timeout and per-request clients
+- [ ] 04-02-PLAN.md — Verify/update hostex-ts contract and implement HostexGateway resilience boundary
 - [ ] 04-03-PLAN.md — Add observability instrumentation plus health/readiness/metrics operational endpoints
 - [ ] 04-04-PLAN.md — Establish CI/CD quality and security gates with release dependency checks
-- [ ] 04-05-PLAN.md — Complete production docs, client-validation matrix, and known-limits documentation
+- [ ] 04-05-PLAN.md — Complete runbook/client-validation/limitations docs and final human verification
+- [ ] 04-06-PLAN.md — Extract config/handlers/types/utils shared modules and rewire bootstrap/composition
+- [ ] 04-07-PLAN.md — Refine tool descriptions and publish endpoint constraints reference
 
 ## Progress
 
@@ -113,9 +115,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Security Foundations | 3/3 | Complete | 2026-02-17 |
 | 2. Type Safety | 3/3 | Complete | 2026-02-17 |
 | 3. Testing Infrastructure | 7/7 | Complete | 2026-02-17 |
-| 4. Architecture & Resilience | 0/TBD | Not started | - |
+| 4. Architecture & Resilience | 7/7 | Complete | 2026-02-17 |
 
 ---
 
 **Traceability:** All 46 active requirements (REQ-001 through REQ-046) mapped to phases.
-**Last updated:** 2026-02-17 during phase 3 execution verification
+**Last updated:** 2026-02-17 during phase 4 execution verification
