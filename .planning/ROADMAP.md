@@ -65,10 +65,14 @@ Plans:
   5. Concurrent client tests verify no state leakage between requests
   6. Test coverage exceeds 80% across all modules
   7. MCP Inspector compatibility validated
-**Plans**: TBD (1-3 plans)
+**Plans:** 5 plans
 
 Plans:
-- [ ] 03-01: [TBD during planning]
+- [ ] 03-01-PLAN.md — Establish Vitest projects, coverage gates, fixtures/factories, and shared test harnesses
+- [ ] 03-02-PLAN.md — Add deterministic unit tests for all 22 handlers with hostex-ts boundary mocks
+- [ ] 03-03-PLAN.md — Verify stdio/shttp protocol compliance, concurrency isolation, and MCP Inspector CLI compatibility
+- [ ] 03-04-PLAN.md — Add helper/schema regression tests to lock >80% coverage and sanitization guarantees
+- [ ] 03-05-PLAN.md — Execute env-gated real Hostex API E2E smoke coverage for all 22 tools
 
 ### Phase 4: Architecture, Resilience & Production Readiness
 **Goal**: Production-ready modular server with retry logic, monitoring, and complete documentation
