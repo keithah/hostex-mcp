@@ -1,18 +1,18 @@
 import { z } from "zod";
 
-const channelSchema = z.strictObject({
+const channelSchema = z.object({
   channel_type: z.string(),
   listing_id: z.string(),
-});
+}).catchall(z.unknown());
 
-const propertySchema = z.strictObject({
+const propertySchema = z.object({
   id: z.number(),
   title: z.string(),
   address: z.string().optional(),
-  longitude: z.string().optional(),
-  latitude: z.string().optional(),
+  longitude: z.union([z.string(), z.number()]).optional(),
+  latitude: z.union([z.string(), z.number()]).optional(),
   channels: z.array(channelSchema),
-});
+}).catchall(z.unknown());
 
 const roomTypeSchema = z.strictObject({
   id: z.number(),

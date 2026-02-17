@@ -16,8 +16,13 @@ function sanitizeMessage(input: unknown): string {
   const base = input instanceof Error ? input.message : String(input);
   return base
     .replace(/authorization\s*[:=]\s*[^\s,;]+/gi, "authorization=[REDACTED]")
+    .replace(/\bauthorization\b/gi, "[REDACTED]")
     .replace(/hostex-access-token\s*[:=]\s*[^\s,;]+/gi, "hostex-access-token=[REDACTED]")
+    .replace(/\bhostex-access-token\b/gi, "[REDACTED]")
+    .replace(/cookie\s*[:=]\s*[^\n]+/gi, "cookie=[REDACTED]")
+    .replace(/\bcookie\b/gi, "[REDACTED]")
     .replace(/bearer\s+[A-Za-z0-9._-]+/gi, "Bearer [REDACTED]")
+    .replace(/\braw_payload\b/gi, "[REDACTED]")
     .replace(/[?&](token|access_token|api_key)=[^&\s]+/gi, "?$1=[REDACTED]")
     .split("\n")[0]
     .slice(0, 240);
@@ -39,7 +44,11 @@ function isValidationError(
 
 function summarizeIssues(issues: ValidationIssueSummary[]): ValidationIssueSummary[] {
   return issues.slice(0, 5).map((issue) => ({
-    path: issue.path,
+    path: issue.path
+      .replace(/authorization/gi, "[REDACTED]")
+      .replace(/hostex-access-token/gi, "[REDACTED]")
+      .replace(/cookie/gi, "[REDACTED]")
+      .replace(/raw_payload/gi, "[REDACTED]"),
     code: issue.code,
     message: sanitizeMessage(issue.message),
   }));
