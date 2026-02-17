@@ -1,4 +1,3 @@
-import { HostexClient } from "hostex-ts";
 import { vi } from "vitest";
 
 type HostexClientMethod =
@@ -28,32 +27,42 @@ type HostexClientMethod =
 type HostexClientMock = Record<HostexClientMethod, ReturnType<typeof vi.fn>>;
 type HostexClientSeeds = Partial<Record<HostexClientMethod, unknown>>;
 
-export const mockHostexClient: HostexClientMock = {
-  listProperties: vi.fn(),
-  listRoomTypes: vi.fn(),
-  listReservations: vi.fn(),
-  createReservation: vi.fn(),
-  cancelReservation: vi.fn(),
-  updateLockCode: vi.fn(),
-  getCustomFields: vi.fn(),
-  updateCustomFields: vi.fn(),
-  listAvailabilities: vi.fn(),
-  updateAvailabilities: vi.fn(),
-  listConversations: vi.fn(),
-  getConversation: vi.fn(),
-  sendMessage: vi.fn(),
-  listReviews: vi.fn(),
-  createReview: vi.fn(),
-  listWebhooks: vi.fn(),
-  createWebhook: vi.fn(),
-  deleteWebhook: vi.fn(),
-  getListingCalendar: vi.fn(),
-  updateListingPrices: vi.fn(),
-  listCustomChannels: vi.fn(),
-  listIncomeMethods: vi.fn(),
-};
+const hoisted = vi.hoisted(() => {
+  const mockHostexClient: HostexClientMock = {
+    listProperties: vi.fn(),
+    listRoomTypes: vi.fn(),
+    listReservations: vi.fn(),
+    createReservation: vi.fn(),
+    cancelReservation: vi.fn(),
+    updateLockCode: vi.fn(),
+    getCustomFields: vi.fn(),
+    updateCustomFields: vi.fn(),
+    listAvailabilities: vi.fn(),
+    updateAvailabilities: vi.fn(),
+    listConversations: vi.fn(),
+    getConversation: vi.fn(),
+    sendMessage: vi.fn(),
+    listReviews: vi.fn(),
+    createReview: vi.fn(),
+    listWebhooks: vi.fn(),
+    createWebhook: vi.fn(),
+    deleteWebhook: vi.fn(),
+    getListingCalendar: vi.fn(),
+    updateListingPrices: vi.fn(),
+    listCustomChannels: vi.fn(),
+    listIncomeMethods: vi.fn(),
+  };
 
-export const MockedHostexClient = vi.fn(() => mockHostexClient);
+  const MockedHostexClient = vi.fn(() => mockHostexClient);
+
+  return {
+    mockHostexClient,
+    MockedHostexClient,
+  };
+});
+
+export const mockHostexClient = hoisted.mockHostexClient;
+export const MockedHostexClient = hoisted.MockedHostexClient;
 
 vi.mock("hostex-ts", async () => {
   const actual = await vi.importActual<typeof import("hostex-ts")>("hostex-ts");
@@ -84,5 +93,5 @@ export function seedHostexClientMockErrors(errors: HostexClientSeeds) {
 }
 
 export function getHostexClientConstructorMock() {
-  return vi.mocked(HostexClient);
+  return MockedHostexClient;
 }
