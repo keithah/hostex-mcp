@@ -79,8 +79,12 @@ describe("hostex-data-schemas", () => {
       },
       updated_at: "2026-02-17T00:00:00Z",
     });
+    const clearResult = toolSchemaMap.hostex_update_custom_fields.safeParse({
+      custom_fields: [],
+    });
 
     expect(result.success).toBe(true);
+    expect(clearResult.success).toBe(true);
   });
 
   it("fails closed for malformed update_custom_fields payloads", () => {
@@ -90,8 +94,12 @@ describe("hostex-data-schemas", () => {
     const invalidCustomFieldsType = toolSchemaMap.hostex_update_custom_fields.safeParse({
       custom_fields: ["not", "an", "object"],
     });
+    const numericCustomFields = toolSchemaMap.hostex_update_custom_fields.safeParse({
+      custom_fields: 123,
+    });
 
     expect(missingCustomFields.success).toBe(false);
     expect(invalidCustomFieldsType.success).toBe(false);
+    expect(numericCustomFields.success).toBe(false);
   });
 });

@@ -120,7 +120,11 @@ const incomeMethodSchema = z.strictObject({
 const emptyDataSchema = z.union([z.undefined(), z.null(), z.strictObject({})]);
 
 const updateCustomFieldsSchema = z.object({
-  custom_fields: z.union([z.record(z.string(), z.unknown()), z.null()]),
+  custom_fields: z.union([
+    z.record(z.string(), z.unknown()),
+    z.array(z.unknown()).length(0),
+    z.null(),
+  ]),
 }).catchall(z.unknown());
 
 export const toolSchemaMap = {
